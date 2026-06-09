@@ -34,16 +34,12 @@ public sealed class OutlookCalendarConnector
 
         try
         {
-            var outlookType = Type.GetTypeFromProgID("Outlook.Application");
-            if (outlookType is null)
-            {
-                return CalendarConnectorResult.Failed("Outlook Desktop nao encontrado via COM.");
-            }
-
-            outlookApp = Activator.CreateInstance(outlookType);
+            outlookApp = TryGetRunningOutlookApplication();
             if (outlookApp is null)
             {
-                return CalendarConnectorResult.Failed("Nao foi possivel iniciar o Outlook via COM.");
+                return CalendarConnectorResult.Failed(
+                    "Nenhuma instancia ativa do Outlook classico foi encontrada via COM. " +
+                    "O novo Outlook/Office 365 nao expoe calendario por COM; ele precisara de conector Microsoft Graph.");
             }
 
             dynamic app = outlookApp;
@@ -210,4 +206,27 @@ public sealed class OutlookCalendarConnector
             // Best-effort COM cleanup only.
         }
     }
+
+    private static object? TryGetRunningOutlookApplication()
+    {
+        try
+        {
+            CLSIDFromProgID("Outlook.Application", out var clsid);
+            GetActiveObject(ref clsid, IntPtr.Zero, out var outlookApp);
+            return outlookApp;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    private static extern void CLSIDFromProgID(string progId, out Guid clsid);
+
+    [DllImport("oleaut32.dll", PreserveSig = false)]
+    private static extern void GetActiveObject(
+        ref Guid clsid,
+        IntPtr reserved,
+        [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
 }

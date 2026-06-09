@@ -64,3 +64,9 @@ Privacy behavior:
 - attendee/body/location are not read into the payload;
 - the generated title is `[Outlook] Busy`;
 - if Outlook is unavailable or returns no events, the client keeps the mocked fallback events.
+
+Important limitation:
+
+- this connector only works with a running and configured classic Outlook COM instance;
+- it does not start or configure classic Outlook;
+- the new Outlook/Office 365 app does not expose the same COM calendar surface, so it needs a future Microsoft Graph connector.
