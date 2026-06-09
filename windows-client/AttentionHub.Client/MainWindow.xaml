@@ -19,13 +19,11 @@
           <TextBlock Text="Attention Hub" FontSize="22" FontWeight="SemiBold" Foreground="#172033" />
           <TextBlock Text="Windows Client MVP" Margin="0,4,0,24" Foreground="#667085" />
 
-          <Border Background="#EAF2FF" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
-            <TextBlock Text="Agora" FontWeight="SemiBold" Foreground="#0B5CAD" />
-          </Border>
-          <TextBlock Text="Eventos" Padding="12,10" Foreground="#344054" />
-          <TextBlock Text="Agenda" Padding="12,10" Foreground="#344054" />
-          <TextBlock Text="Regras" Padding="12,10" Foreground="#344054" />
-          <TextBlock Text="Status" Padding="12,10" Foreground="#344054" />
+          <Button x:Name="NowNavButton" Content="Agora" Tag="Agora" Click="NavButton_Click" HorizontalContentAlignment="Left" Margin="0,0,0,8" />
+          <Button x:Name="EventsNavButton" Content="Eventos" Tag="Eventos" Click="NavButton_Click" HorizontalContentAlignment="Left" Margin="0,0,0,8" />
+          <Button x:Name="AgendaNavButton" Content="Agenda" Tag="Agenda" Click="NavButton_Click" HorizontalContentAlignment="Left" Margin="0,0,0,8" />
+          <Button x:Name="RulesNavButton" Content="Regras" Tag="Regras" Click="NavButton_Click" HorizontalContentAlignment="Left" Margin="0,0,0,8" />
+          <Button x:Name="StatusNavButton" Content="Status" Tag="Status" Click="NavButton_Click" HorizontalContentAlignment="Left" Margin="0,0,0,8" />
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom">
@@ -45,13 +43,13 @@
 
       <DockPanel Grid.Row="0" Margin="0,0,0,18">
         <StackPanel DockPanel.Dock="Left">
-          <TextBlock Text="Agora" FontSize="28" FontWeight="SemiBold" Foreground="#172033" />
-          <TextBlock Text="Eventos mockados enviados via polling para o backend FastAPI" Foreground="#667085" />
+          <TextBlock x:Name="PageTitleText" Text="Agora" FontSize="28" FontWeight="SemiBold" Foreground="#172033" />
+          <TextBlock x:Name="PageSubtitleText" Text="Resumo operacional dos eventos mockados" Foreground="#667085" />
         </StackPanel>
         <Border DockPanel.Dock="Right" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="6" Padding="12,8">
           <StackPanel Orientation="Horizontal">
             <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#98A2B3" Margin="0,0,8,0" />
-            <TextBlock x:Name="SyncStatusText" Text="Aguardando sincronização" Foreground="#344054" />
+            <TextBlock x:Name="SyncStatusText" Text="Aguardando sincronizacao" Foreground="#344054" />
           </StackPanel>
         </Border>
       </DockPanel>
@@ -81,55 +79,149 @@
       </Border>
 
       <Grid Grid.Row="2">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="2*" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <Grid x:Name="NowView">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,18">
+            <Border Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,12,0">
+              <StackPanel>
+                <TextBlock Text="Eventos" Foreground="#667085" />
+                <TextBlock x:Name="TotalEventsText" Text="4" FontSize="28" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,12,0">
+              <StackPanel>
+                <TextBlock Text="Alta prioridade" Foreground="#667085" />
+                <TextBlock x:Name="HighPriorityText" Text="2" FontSize="28" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,12,0">
+              <StackPanel>
+                <TextBlock Text="Fontes" Foreground="#667085" />
+                <TextBlock x:Name="SourcesText" Text="3" FontSize="28" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Border Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+              <StackPanel>
+                <TextBlock Text="Calendario" Foreground="#667085" />
+                <TextBlock Text="Mockado" FontSize="28" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+          </UniformGrid>
 
-        <Border Grid.Column="0" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,18,0">
+          <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="2*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,18,0">
+              <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Eventos recentes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                <DataGrid x:Name="EventsGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          BorderBrush="#EAECF0"
+                          RowHeaderWidth="0">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="Hora" Binding="{Binding DisplayTime}" Width="88" />
+                    <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="110" />
+                    <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="150" />
+                    <DataGridTextColumn Header="Prioridade" Binding="{Binding Priority}" Width="95" />
+                    <DataGridTextColumn Header="Resumo" Binding="{Binding Summary}" Width="*" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </DockPanel>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+              <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Resposta do backend" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                <TextBox x:Name="ResponseTextBox"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         FontFamily="Consolas"
+                         FontSize="12"
+                         IsReadOnly="True"
+                         BorderBrush="#EAECF0" />
+              </DockPanel>
+            </Border>
+          </Grid>
+        </Grid>
+
+        <Border x:Name="EventsView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
           <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="Eventos mockados" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-            <DataGrid x:Name="EventsGrid"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      IsReadOnly="True"
-                      HeadersVisibility="Column"
-                      GridLinesVisibility="Horizontal"
-                      BorderBrush="#EAECF0"
-                      RowHeaderWidth="0">
+            <TextBlock DockPanel.Dock="Top" Text="Inbox unificada" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <DataGrid x:Name="EventsInboxGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
               <DataGrid.Columns>
-                <DataGridTextColumn Header="Hora" Binding="{Binding DisplayTime}" Width="88" />
-                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="110" />
-                <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="150" />
-                <DataGridTextColumn Header="Prioridade" Binding="{Binding Priority}" Width="95" />
+                <DataGridTextColumn Header="Hora" Binding="{Binding DisplayTime}" Width="90" />
+                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="130" />
+                <DataGridTextColumn Header="App" Binding="{Binding SourceApp}" Width="100" />
+                <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="160" />
+                <DataGridTextColumn Header="Prioridade" Binding="{Binding Priority}" Width="110" />
+                <DataGridTextColumn Header="Status" Binding="{Binding LocalStatus}" Width="110" />
                 <DataGridTextColumn Header="Resumo" Binding="{Binding Summary}" Width="*" />
               </DataGrid.Columns>
             </DataGrid>
           </DockPanel>
         </Border>
 
-        <Border Grid.Column="1" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+        <Border x:Name="AgendaView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
           <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="Resposta do backend" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-            <TextBox x:Name="ResponseTextBox"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto"
-                     FontFamily="Consolas"
-                     FontSize="12"
-                     IsReadOnly="True"
-                     BorderBrush="#EAECF0" />
+            <TextBlock DockPanel.Dock="Top" Text="Agenda consolidada mockada" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <DataGrid x:Name="AgendaGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Inicio" Binding="{Binding StartsAtDisplay}" Width="130" />
+                <DataGridTextColumn Header="Fim" Binding="{Binding EndsAtDisplay}" Width="130" />
+                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="150" />
+                <DataGridTextColumn Header="Titulo mascarado" Binding="{Binding MaskedTitle}" Width="*" />
+                <DataGridTextColumn Header="Disponibilidade" Binding="{Binding Availability}" Width="150" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+
+        <Border x:Name="RulesView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Regras mockadas" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <DataGrid x:Name="RulesGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Regra" Binding="{Binding Name}" Width="220" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="110" />
+                <DataGridTextColumn Header="Descricao" Binding="{Binding Description}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+
+        <Border x:Name="StatusView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Status das fontes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <DataGrid x:Name="StatusGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="150" />
+                <DataGridTextColumn Header="App" Binding="{Binding App}" Width="120" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
+                <DataGridTextColumn Header="Ultimo evento" Binding="{Binding LastEventDisplay}" Width="160" />
+                <DataGridTextColumn Header="Observacao" Binding="{Binding Notes}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
           </DockPanel>
         </Border>
       </Grid>
 
       <TextBlock Grid.Row="3"
                  x:Name="FooterText"
-                 Text="Sem integrações reais neste MVP: os eventos são gerados localmente para validar o loop client -> backend -> resposta."
+                 Text="Sem integracoes reais neste MVP: os eventos sao gerados localmente para validar o loop client -> backend -> resposta."
                  Foreground="#667085"
                  Margin="0,16,0,0" />
     </Grid>
   </Grid>
 </Window>
-

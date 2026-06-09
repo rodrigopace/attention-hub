@@ -27,11 +27,38 @@ public sealed record MockAttentionEvent(
     string Priority,
     string Summary,
     string DedupeKey,
+    string LocalStatus = "Novo",
     CalendarPayload? Calendar = null,
     EmailPayload? Email = null,
     MessagePayload? Message = null)
 {
     public string DisplayTime => OccurredAt.ToString("HH:mm");
+}
+
+public sealed record AgendaItem(
+    DateTimeOffset StartsAt,
+    DateTimeOffset EndsAt,
+    string SourceDisplayName,
+    string MaskedTitle,
+    string Availability)
+{
+    public string StartsAtDisplay => StartsAt.ToString("dd/MM HH:mm");
+    public string EndsAtDisplay => EndsAt.ToString("dd/MM HH:mm");
+}
+
+public sealed record RuleSetting(
+    string Name,
+    string Status,
+    string Description);
+
+public sealed record SourceStatus(
+    string SourceDisplayName,
+    string App,
+    string Status,
+    DateTimeOffset LastEventAt,
+    string Notes)
+{
+    public string LastEventDisplay => LastEventAt.ToString("dd/MM HH:mm");
 }
 
 public sealed record SyncRequest(
@@ -158,4 +185,3 @@ public static class SyncRequestFactory
             Message: item.Message);
     }
 }
-

@@ -33,3 +33,4 @@ venv/
 *.sqlite
 *.sqlite3
 *.db
+backend/data/
