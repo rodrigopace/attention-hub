@@ -201,12 +201,14 @@ public partial class MainWindow
             {
                 SetStatus("Notificacoes Windows indisponiveis; fallback mantido", "#F79009");
                 FooterText.Text = result.Message;
+                ResponseTextBox.Text = result.Diagnostics;
                 return;
             }
 
             AddNotificationEvents(result.Events);
             SetStatus("Notificacoes Windows carregadas", "#12B76A");
             FooterText.Text = result.Message;
+            ResponseTextBox.Text = result.Diagnostics;
         }
         finally
         {

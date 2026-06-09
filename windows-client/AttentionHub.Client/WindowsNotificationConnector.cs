@@ -8,7 +8,8 @@ namespace AttentionHub.Client;
 public sealed record NotificationConnectorResult(
     bool Success,
     IReadOnlyList<MockAttentionEvent> Events,
-    string Message)
+    string Message,
+    string Diagnostics = "")
 {
     public static NotificationConnectorResult Failed(string message)
     {
@@ -27,14 +28,32 @@ public sealed class WindowsNotificationConnector
 
             if (accessStatus != UserNotificationListenerAccessStatus.Allowed)
             {
-                return NotificationConnectorResult.Failed($"Acesso a notificacoes Windows nao permitido: {accessStatus}.");
+                return new NotificationConnectorResult(
+                    Success: false,
+                    Events: [],
+                    Message: $"Acesso a notificacoes Windows nao permitido: {accessStatus}.",
+                    Diagnostics: $"access_status={accessStatus}");
             }
 
             var notifications = await listener.GetNotificationsAsync(NotificationKinds.Toast);
-            var events = notifications
-                .Select(TryMapNotification)
-                .Where(item => item is not null)
-                .Cast<MockAttentionEvent>()
+            var mappedEvents = new List<MockAttentionEvent>();
+            var diagnostics = new List<string>
+            {
+                $"access_status={accessStatus}",
+                $"raw_notifications={notifications.Count}"
+            };
+
+            foreach (var notification in notifications)
+            {
+                var mapped = TryMapNotification(notification, out var detail);
+                diagnostics.Add(detail);
+                if (mapped is not null)
+                {
+                    mappedEvents.Add(mapped);
+                }
+            }
+
+            var events = mappedEvents
                 .OrderByDescending(item => item.OccurredAt)
                 .ToList();
 
@@ -43,7 +62,8 @@ public sealed class WindowsNotificationConnector
                 Events: events,
                 Message: events.Count == 0
                     ? "Notificacoes Windows lidas com sucesso, sem notificacoes ativas."
-                    : $"Notificacoes Windows lidas com sucesso: {events.Count} notificacoes ativas.");
+                    : $"Notificacoes Windows lidas com sucesso: {events.Count} notificacoes ativas.",
+                Diagnostics: string.Join(Environment.NewLine, diagnostics));
         }
         catch (Exception ex)
         {
@@ -51,7 +71,7 @@ public sealed class WindowsNotificationConnector
         }
     }
 
-    private static MockAttentionEvent? TryMapNotification(UserNotification notification)
+    private static MockAttentionEvent? TryMapNotification(UserNotification notification, out string diagnostics)
     {
         try
         {
@@ -65,6 +85,7 @@ public sealed class WindowsNotificationConnector
             var summary = string.IsNullOrWhiteSpace(text)
                 ? $"Notificacao de {appName}"
                 : text;
+            diagnostics = $"mapped id={notification.Id}; app={appName}; created={notification.CreationTime:o}; text_length={text.Length}";
 
             var occurredAt = notification.CreationTime;
             var hash = Hash($"{notification.Id}:{appName}:{occurredAt:o}:{summary}");
@@ -87,8 +108,9 @@ public sealed class WindowsNotificationConnector
                     ConversationType: eventType == "message.direct" ? "direct" : "unknown",
                     SenderHash: $"sha256:{hash[..16]}"));
         }
-        catch
+        catch (Exception ex)
         {
+            diagnostics = $"discarded id={notification.Id}; reason={ex.Message}";
             return null;
         }
     }
