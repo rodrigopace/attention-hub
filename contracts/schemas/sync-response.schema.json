@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://attention-hub.local/contracts/sync-response.schema.json",
+  "title": "SyncResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "accepted_event_ids",
+    "rejected_events",
+    "next_sync_cursor",
+    "server_time"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "accepted_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rejected_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rejected_event"
+      }
+    },
+    "next_sync_cursor": {
+      "type": "string"
+    },
+    "server_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "effective_rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    }
+  },
+  "$defs": {
+    "rejected_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "reason"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "enabled",
+        "rule_type"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "rule_type": {
+          "type": "string",
+          "enum": [
+            "alert_email_to_me",
+            "alert_mentions",
+            "alert_direct_messages",
+            "quiet_hours",
+            "metadata_only",
+            "mask_calendar_titles"
+          ]
+        },
+        "config": {
+          "type": "object"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "action_type"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string"
+        },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "show_local_notification",
+            "refresh_rules",
+            "slow_down_polling",
+            "reauthenticate_calendar",
+            "none"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calendar_sync": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "degraded",
+            "disabled",
+            "reauth_required"
+          ]
+        },
+        "recommended_poll_interval_seconds": {
+          "type": "integer",
+          "minimum": 30
+        }
+      }
+    }
+  }
+}
+

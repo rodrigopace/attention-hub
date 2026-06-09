@@ -1,0 +1,47 @@
+{
+  "request_id": "req_20260609_001",
+  "accepted_event_ids": [
+    "evt_cal_001",
+    "evt_email_001",
+    "evt_msg_001"
+  ],
+  "rejected_events": [],
+  "next_sync_cursor": "cursor_20260609_001",
+  "server_time": "2026-06-09T09:00:01-03:00",
+  "effective_rules": [
+    {
+      "rule_id": "rule_metadata_only",
+      "enabled": true,
+      "rule_type": "metadata_only",
+      "config": {}
+    },
+    {
+      "rule_id": "rule_email_to_me",
+      "enabled": true,
+      "rule_type": "alert_email_to_me",
+      "config": {
+        "priority": "high"
+      }
+    },
+    {
+      "rule_id": "rule_mask_calendar",
+      "enabled": true,
+      "rule_type": "mask_calendar_titles",
+      "config": {
+        "title_template": "[{source_display_name}] Busy"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "action_notify_001",
+      "action_type": "show_local_notification",
+      "message": "Novo e-mail direto em Empresa A"
+    }
+  ],
+  "status": {
+    "calendar_sync": "ok",
+    "recommended_poll_interval_seconds": 120
+  }
+}
+

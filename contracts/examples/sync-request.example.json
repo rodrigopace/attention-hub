@@ -1,0 +1,83 @@
+{
+  "request_id": "req_20260609_001",
+  "device": {
+    "device_id": "win-notebook-empresa-a",
+    "display_name": "Notebook Empresa A",
+    "platform": "windows",
+    "agent_version": "0.1.0",
+    "timezone": "America/Sao_Paulo"
+  },
+  "sync_cursor": null,
+  "sent_at": "2026-06-09T09:00:00-03:00",
+  "client_capabilities": [
+    "windows_notifications",
+    "outlook_calendar_read",
+    "outlook_email_metadata",
+    "local_audit_preview",
+    "system_proxy"
+  ],
+  "events": [
+    {
+      "event_id": "evt_cal_001",
+      "event_type": "calendar.busy",
+      "source": {
+        "source_id": "empresa-a",
+        "display_name": "Empresa A",
+        "environment_type": "corporate",
+        "app": "outlook"
+      },
+      "occurred_at": "2026-06-09T09:00:00-03:00",
+      "privacy_level": "metadata_only",
+      "priority": "normal",
+      "dedupe_key": "empresa-a:calendar:2026-06-09T09:30:00-03:00:2026-06-09T10:00:00-03:00",
+      "calendar": {
+        "starts_at": "2026-06-09T09:30:00-03:00",
+        "ends_at": "2026-06-09T10:00:00-03:00",
+        "availability": "busy",
+        "masked_title": "[Empresa A] Busy",
+        "is_recurring": false
+      }
+    },
+    {
+      "event_id": "evt_email_001",
+      "event_type": "email.direct",
+      "source": {
+        "source_id": "empresa-a",
+        "display_name": "Empresa A",
+        "environment_type": "corporate",
+        "app": "outlook"
+      },
+      "occurred_at": "2026-06-09T08:58:00-03:00",
+      "received_at": "2026-06-09T08:58:05-03:00",
+      "privacy_level": "metadata_only",
+      "priority": "high",
+      "dedupe_key": "empresa-a:email:msg_opaque_123",
+      "email": {
+        "direction": "inbound",
+        "sender_hash": "sha256:sender-token",
+        "recipient_match": "to",
+        "has_attachments": false
+      }
+    },
+    {
+      "event_id": "evt_msg_001",
+      "event_type": "message.direct",
+      "source": {
+        "source_id": "empresa-b",
+        "display_name": "Empresa B",
+        "environment_type": "corporate",
+        "app": "teams"
+      },
+      "occurred_at": "2026-06-09T08:59:00-03:00",
+      "received_at": "2026-06-09T08:59:02-03:00",
+      "privacy_level": "metadata_only",
+      "priority": "normal",
+      "dedupe_key": "empresa-b:teams:notif_opaque_456",
+      "message": {
+        "conversation_type": "direct",
+        "sender_hash": "sha256:sender-token"
+      }
+    }
+  ]
+}
+

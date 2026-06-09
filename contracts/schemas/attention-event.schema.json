@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://attention-hub.local/contracts/attention-event.schema.json",
+  "title": "AttentionEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "source",
+    "occurred_at",
+    "privacy_level",
+    "dedupe_key"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Client-generated stable event identifier."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "calendar.busy",
+        "calendar.changed",
+        "calendar.conflict_detected",
+        "email.direct",
+        "email.mention",
+        "message.direct",
+        "message.mention",
+        "system.heartbeat"
+      ]
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "privacy_level": {
+      "type": "string",
+      "enum": [
+        "metadata_only",
+        "sanitized_subject",
+        "sanitized_preview"
+      ],
+      "default": "metadata_only"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "Stable key used by backend deduplication."
+    },
+    "calendar": {
+      "$ref": "#/$defs/calendar_payload"
+    },
+    "email": {
+      "$ref": "#/$defs/email_payload"
+    },
+    "message": {
+      "$ref": "#/$defs/message_payload"
+    },
+    "system": {
+      "$ref": "#/$defs/system_payload"
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "display_name",
+        "environment_type"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "description": "Opaque source identifier, for example empresa-a."
+        },
+        "display_name": {
+          "type": "string",
+          "description": "User-facing label, for example Empresa A."
+        },
+        "environment_type": {
+          "type": "string",
+          "enum": [
+            "corporate",
+            "personal",
+            "unknown"
+          ]
+        },
+        "app": {
+          "type": "string",
+          "enum": [
+            "outlook",
+            "teams",
+            "slack",
+            "whatsapp",
+            "google_calendar",
+            "windows",
+            "other"
+          ]
+        }
+      }
+    },
+    "calendar_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "starts_at",
+        "ends_at",
+        "availability"
+      ],
+      "properties": {
+        "starts_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ends_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "busy",
+            "tentative",
+            "free",
+            "out_of_office"
+          ]
+        },
+        "masked_title": {
+          "type": "string",
+          "description": "Safe title for the personal calendar, for example [Empresa A] Busy."
+        },
+        "is_recurring": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "email_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "direction",
+        "recipient_match"
+      ],
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": [
+            "inbound",
+            "outbound"
+          ]
+        },
+        "sender_hash": {
+          "type": "string",
+          "description": "Hash or opaque sender token. Raw email is not required in P0."
+        },
+        "recipient_match": {
+          "type": "string",
+          "enum": [
+            "to",
+            "cc",
+            "mention",
+            "none"
+          ]
+        },
+        "sanitized_subject": {
+          "type": "string"
+        },
+        "has_attachments": {
+          "type": "boolean"
+        }
+      }
+    },
+    "message_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conversation_type"
+      ],
+      "properties": {
+        "conversation_type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "group",
+            "channel",
+            "unknown"
+          ]
+        },
+        "sender_hash": {
+          "type": "string"
+        },
+        "channel_hash": {
+          "type": "string"
+        },
+        "sanitized_preview": {
+          "type": "string"
+        }
+      }
+    },
+    "system_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent_version": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://attention-hub.local/contracts/sync-request.schema.json",
+  "title": "SyncRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "device",
+    "sync_cursor",
+    "events"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string"
+    },
+    "device": {
+      "$ref": "#/$defs/device"
+    },
+    "sync_cursor": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Last successful cursor returned by the backend."
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "attention-event.schema.json"
+      }
+    },
+    "client_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "windows_notifications",
+          "outlook_calendar_read",
+          "outlook_email_metadata",
+          "local_audit_preview",
+          "system_proxy"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "device_id",
+        "display_name",
+        "platform",
+        "agent_version"
+      ],
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "windows"
+          ]
+        },
+        "agent_version": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+

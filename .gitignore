@@ -1,0 +1,35 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Build outputs
+bin/
+obj/
+dist/
+build/
+out/
+
+# Node/Python/.NET common caches
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
