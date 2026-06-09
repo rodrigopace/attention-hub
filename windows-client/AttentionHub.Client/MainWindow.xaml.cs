@@ -12,10 +12,13 @@ public partial class MainWindow
     private readonly ObservableCollection<MockAttentionEvent> _events;
     private readonly DispatcherTimer _pollTimer;
     private readonly SyncClient _syncClient = new();
+    private ClientSettings _settings;
 
     public MainWindow()
     {
         InitializeComponent();
+        _settings = ClientSettingsStore.Load();
+        ApplySettingsToUi();
 
         _events = new ObservableCollection<MockAttentionEvent>(MockEventFactory.CreateInitialEvents());
         EventsGrid.ItemsSource = _events;
@@ -41,7 +44,17 @@ public partial class MainWindow
 
     private async void SyncNowButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!SaveSettingsFromUi(showConfirmation: true))
+        {
+            return;
+        }
+
         await SyncAsync();
+    }
+
+    private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        SaveSettingsFromUi(showConfirmation: true);
     }
 
     private void TogglePollingButton_Click(object sender, RoutedEventArgs e)
@@ -60,6 +73,7 @@ public partial class MainWindow
             return;
         }
 
+        SaveSettingsFromUi(showConfirmation: false);
         _pollTimer.Interval = interval;
         _pollTimer.Start();
         TogglePollingButton.Content = "Pausar polling";
@@ -73,8 +87,8 @@ public partial class MainWindow
 
         try
         {
-            var request = SyncRequestFactory.Create(_events);
-            var response = await _syncClient.PostSyncAsync(BackendUrlTextBox.Text.Trim(), request);
+            var request = SyncRequestFactory.Create(_events, _settings);
+            var response = await _syncClient.PostSyncAsync(_settings.BackendUrl, request);
 
             ResponseTextBox.Text = JsonSerializer.Serialize(response, JsonOptions.Pretty);
             SetStatus($"Sync OK: {response.AcceptedEventIds.Count} aceitos, {response.DuplicateEventIds.Count} duplicados", "#12B76A");
@@ -158,5 +172,60 @@ public partial class MainWindow
     private static SolidColorBrush SolidBrush(string color)
     {
         return (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
+    }
+
+    private void ApplySettingsToUi()
+    {
+        BackendUrlTextBox.Text = _settings.BackendUrl;
+        PollIntervalTextBox.Text = _settings.PollIntervalSeconds.ToString();
+        DeviceIdTextBox.Text = _settings.DeviceId;
+        DeviceDisplayNameTextBox.Text = _settings.DeviceDisplayName;
+        DeviceText.Text = _settings.DeviceId;
+        SettingsPathText.Text = ClientSettingsStore.SettingsPath;
+        SettingsStatusText.Text = "Configuracoes carregadas.";
+    }
+
+    private bool SaveSettingsFromUi(bool showConfirmation)
+    {
+        if (!int.TryParse(PollIntervalTextBox.Text.Trim(), out var pollSeconds) || pollSeconds < 30)
+        {
+            if (showConfirmation)
+            {
+                MessageBox.Show("Informe um intervalo de polling valido, com no minimo 30 segundos.", "Attention Hub", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            return false;
+        }
+
+        var backendUrl = BackendUrlTextBox.Text.Trim();
+        var deviceId = DeviceIdTextBox.Text.Trim();
+        var deviceName = DeviceDisplayNameTextBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(backendUrl) || string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(deviceName))
+        {
+            if (showConfirmation)
+            {
+                MessageBox.Show("Backend URL, Device ID e Nome do dispositivo sao obrigatorios.", "Attention Hub", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            return false;
+        }
+
+        _settings = new ClientSettings(
+            BackendUrl: backendUrl,
+            PollIntervalSeconds: pollSeconds,
+            DeviceId: deviceId,
+            DeviceDisplayName: deviceName);
+
+        ClientSettingsStore.Save(_settings);
+        DeviceText.Text = _settings.DeviceId;
+        SettingsStatusText.Text = $"Configuracoes salvas em {DateTimeOffset.Now:HH:mm:ss}.";
+
+        if (showConfirmation)
+        {
+            SetStatus("Configuracoes salvas", "#12B76A");
+        }
+
+        return true;
     }
 }

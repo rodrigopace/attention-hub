@@ -29,6 +29,7 @@
         <StackPanel DockPanel.Dock="Bottom">
           <TextBlock Text="Dispositivo" FontWeight="SemiBold" />
           <TextBlock x:Name="DeviceText" Text="win-mock-client" Foreground="#667085" Margin="0,4,0,0" />
+          <TextBlock x:Name="SettingsPathText" Text="" Foreground="#98A2B3" FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0" />
         </StackPanel>
       </DockPanel>
     </Border>
@@ -202,18 +203,46 @@
         </Border>
 
         <Border x:Name="StatusView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
-          <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="Status das fontes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-            <DataGrid x:Name="StatusGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
-              <DataGrid.Columns>
-                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="150" />
-                <DataGridTextColumn Header="App" Binding="{Binding App}" Width="120" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
-                <DataGridTextColumn Header="Ultimo evento" Binding="{Binding LastEventDisplay}" Width="160" />
-                <DataGridTextColumn Header="Observacao" Binding="{Binding Notes}" Width="*" />
-              </DataGrid.Columns>
-            </DataGrid>
-          </DockPanel>
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="#EAECF0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="220" />
+                  <ColumnDefinition Width="260" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="Device ID" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <TextBox x:Name="DeviceIdTextBox" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                  <TextBlock Text="Nome do dispositivo" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <TextBox x:Name="DeviceDisplayNameTextBox" />
+                </StackPanel>
+                <Button Grid.Column="2" x:Name="SaveSettingsButton" Content="Salvar configuracoes" VerticalAlignment="Bottom" Click="SaveSettingsButton_Click" />
+                <TextBlock Grid.Column="3" x:Name="SettingsStatusText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextWrapping="Wrap" />
+              </Grid>
+            </Border>
+
+            <DockPanel Grid.Row="1">
+              <TextBlock DockPanel.Dock="Top" Text="Status das fontes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+              <DataGrid x:Name="StatusGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="150" />
+                  <DataGridTextColumn Header="App" Binding="{Binding App}" Width="120" />
+                  <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
+                  <DataGridTextColumn Header="Ultimo evento" Binding="{Binding LastEventDisplay}" Width="160" />
+                  <DataGridTextColumn Header="Observacao" Binding="{Binding Notes}" Width="*" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
+          </Grid>
         </Border>
       </Grid>
 

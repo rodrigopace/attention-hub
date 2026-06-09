@@ -35,3 +35,20 @@ http://localhost:8000
 ```
 
 Polling is disabled by default. Use `Sincronizar` for a manual sync or `Iniciar polling` to poll automatically.
+
+## Local Settings
+
+The client persists basic settings as JSON in:
+
+```text
+%LocalAppData%\AttentionHub\client-settings.json
+```
+
+Persisted fields:
+
+- backend URL;
+- polling interval in seconds;
+- device id;
+- device display name.
+
+Use the `Status` screen to edit and save device settings. Backend URL and polling interval are also saved when syncing or starting polling.

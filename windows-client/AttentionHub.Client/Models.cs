@@ -143,13 +143,13 @@ public sealed record SyncStatus(
 
 public static class SyncRequestFactory
 {
-    public static SyncRequest Create(IEnumerable<MockAttentionEvent> mockEvents)
+    public static SyncRequest Create(IEnumerable<MockAttentionEvent> mockEvents, ClientSettings settings)
     {
         return new SyncRequest(
             RequestId: $"req_{DateTimeOffset.UtcNow:yyyyMMddHHmmss}",
             Device: new Device(
-                DeviceId: "win-mock-client",
-                DisplayName: Environment.MachineName,
+                DeviceId: settings.DeviceId,
+                DisplayName: settings.DeviceDisplayName,
                 Platform: "windows",
                 AgentVersion: "0.1.0",
                 Timezone: TimeZoneInfo.Local.Id),
