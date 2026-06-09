@@ -160,6 +160,41 @@
         <Border x:Name="EventsView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
           <DockPanel>
             <TextBlock DockPanel.Dock="Top" Text="Inbox unificada" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <Border DockPanel.Dock="Top" Background="#F8FAFC" BorderBrush="#EAECF0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="160" />
+                  <ColumnDefinition Width="160" />
+                  <ColumnDefinition Width="150" />
+                  <ColumnDefinition Width="150" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                  <TextBlock Text="Fonte" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <ComboBox x:Name="SourceFilterComboBox" SelectionChanged="InboxFilter_Changed" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                  <TextBlock Text="Tipo" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <ComboBox x:Name="TypeFilterComboBox" SelectionChanged="InboxFilter_Changed" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                  <TextBlock Text="Prioridade" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <ComboBox x:Name="PriorityFilterComboBox" SelectionChanged="InboxFilter_Changed" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Margin="0,0,10,0">
+                  <TextBlock Text="Status" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <ComboBox x:Name="StatusFilterComboBox" SelectionChanged="InboxFilter_Changed" />
+                </StackPanel>
+
+                <Button Grid.Column="4" Content="Limpar filtros" VerticalAlignment="Bottom" Click="ClearInboxFiltersButton_Click" />
+                <TextBlock Grid.Column="5" x:Name="InboxCountText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextAlignment="Right" />
+              </Grid>
+            </Border>
             <DataGrid x:Name="EventsInboxGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Hora" Binding="{Binding DisplayTime}" Width="90" />
@@ -169,6 +204,16 @@
                 <DataGridTextColumn Header="Prioridade" Binding="{Binding Priority}" Width="110" />
                 <DataGridTextColumn Header="Status" Binding="{Binding LocalStatus}" Width="110" />
                 <DataGridTextColumn Header="Resumo" Binding="{Binding Summary}" Width="*" />
+                <DataGridTemplateColumn Header="Acoes" Width="190">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <StackPanel Orientation="Horizontal">
+                        <Button Content="Visto" Tag="{Binding}" Click="MarkSeenButton_Click" MinWidth="64" Padding="8,4" Margin="0,0,6,0" />
+                        <Button Content="Silenciar" Tag="{Binding}" Click="SilenceButton_Click" MinWidth="82" Padding="8,4" Margin="0" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
               </DataGrid.Columns>
             </DataGrid>
           </DockPanel>

@@ -1,5 +1,6 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace AttentionHub.Client;
 
@@ -17,22 +18,75 @@ public static class JsonOptions
     };
 }
 
-public sealed record MockAttentionEvent(
-    string EventId,
-    string EventType,
-    string SourceId,
-    string SourceDisplayName,
-    string SourceApp,
-    DateTimeOffset OccurredAt,
-    string Priority,
-    string Summary,
-    string DedupeKey,
-    string LocalStatus = "Novo",
-    CalendarPayload? Calendar = null,
-    EmailPayload? Email = null,
-    MessagePayload? Message = null)
+public sealed class MockAttentionEvent : INotifyPropertyChanged
 {
+    private string _localStatus;
+
+    public MockAttentionEvent(
+        string eventId,
+        string eventType,
+        string sourceId,
+        string sourceDisplayName,
+        string sourceApp,
+        DateTimeOffset occurredAt,
+        string priority,
+        string summary,
+        string dedupeKey,
+        string localStatus = "Novo",
+        CalendarPayload? calendar = null,
+        EmailPayload? email = null,
+        MessagePayload? message = null)
+    {
+        EventId = eventId;
+        EventType = eventType;
+        SourceId = sourceId;
+        SourceDisplayName = sourceDisplayName;
+        SourceApp = sourceApp;
+        OccurredAt = occurredAt;
+        Priority = priority;
+        Summary = summary;
+        DedupeKey = dedupeKey;
+        _localStatus = localStatus;
+        Calendar = calendar;
+        Email = email;
+        Message = message;
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string EventId { get; }
+    public string EventType { get; }
+    public string SourceId { get; }
+    public string SourceDisplayName { get; }
+    public string SourceApp { get; }
+    public DateTimeOffset OccurredAt { get; }
+    public string Priority { get; }
+    public string Summary { get; }
+    public string DedupeKey { get; }
+    public CalendarPayload? Calendar { get; }
+    public EmailPayload? Email { get; }
+    public MessagePayload? Message { get; }
     public string DisplayTime => OccurredAt.ToString("HH:mm");
+
+    public string LocalStatus
+    {
+        get => _localStatus;
+        set
+        {
+            if (_localStatus == value)
+            {
+                return;
+            }
+
+            _localStatus = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }
 
 public sealed record AgendaItem(

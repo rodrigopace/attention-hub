@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -12,6 +14,7 @@ public partial class MainWindow
     private readonly ObservableCollection<MockAttentionEvent> _events;
     private readonly DispatcherTimer _pollTimer;
     private readonly SyncClient _syncClient = new();
+    private ICollectionView _inboxView = null!;
     private ClientSettings _settings;
 
     public MainWindow()
@@ -22,10 +25,14 @@ public partial class MainWindow
 
         _events = new ObservableCollection<MockAttentionEvent>(MockEventFactory.CreateInitialEvents());
         EventsGrid.ItemsSource = _events;
-        EventsInboxGrid.ItemsSource = _events;
+        _inboxView = CollectionViewSource.GetDefaultView(_events);
+        _inboxView.Filter = FilterInboxEvent;
+        EventsInboxGrid.ItemsSource = _inboxView;
         AgendaGrid.ItemsSource = MockEventFactory.CreateAgendaItems(_events);
         RulesGrid.ItemsSource = MockEventFactory.CreateRules();
         StatusGrid.ItemsSource = MockEventFactory.CreateSourceStatuses(_events);
+        ConfigureInboxFilters();
+        RefreshInboxView();
         RefreshSummary();
 
         _pollTimer = new DispatcherTimer();
@@ -55,6 +62,40 @@ public partial class MainWindow
     private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
     {
         SaveSettingsFromUi(showConfirmation: true);
+    }
+
+    private void InboxFilter_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        RefreshInboxView();
+    }
+
+    private void ClearInboxFiltersButton_Click(object sender, RoutedEventArgs e)
+    {
+        SourceFilterComboBox.SelectedItem = "Todas";
+        TypeFilterComboBox.SelectedItem = "Todos";
+        PriorityFilterComboBox.SelectedItem = "Todas";
+        StatusFilterComboBox.SelectedItem = "Todos";
+        RefreshInboxView();
+    }
+
+    private void MarkSeenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: MockAttentionEvent item })
+        {
+            item.LocalStatus = "Visto";
+            RefreshInboxView();
+            RefreshSummary();
+        }
+    }
+
+    private void SilenceButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: MockAttentionEvent item })
+        {
+            item.LocalStatus = "Silenciado";
+            RefreshInboxView();
+            RefreshSummary();
+        }
     }
 
     private void TogglePollingButton_Click(object sender, RoutedEventArgs e)
@@ -172,6 +213,49 @@ public partial class MainWindow
     private static SolidColorBrush SolidBrush(string color)
     {
         return (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
+    }
+
+    private void ConfigureInboxFilters()
+    {
+        SourceFilterComboBox.ItemsSource = new[] { "Todas" }
+            .Concat(_events.Select(item => item.SourceDisplayName).Distinct().OrderBy(item => item))
+            .ToList();
+        TypeFilterComboBox.ItemsSource = new[] { "Todos" }
+            .Concat(_events.Select(item => item.EventType).Distinct().OrderBy(item => item))
+            .ToList();
+        PriorityFilterComboBox.ItemsSource = new[] { "Todas", "low", "normal", "high", "urgent" };
+        StatusFilterComboBox.ItemsSource = new[] { "Todos", "Novo", "Visto", "Silenciado" };
+
+        SourceFilterComboBox.SelectedIndex = 0;
+        TypeFilterComboBox.SelectedIndex = 0;
+        PriorityFilterComboBox.SelectedIndex = 0;
+        StatusFilterComboBox.SelectedIndex = 0;
+    }
+
+    private bool FilterInboxEvent(object item)
+    {
+        if (item is not MockAttentionEvent inboxEvent)
+        {
+            return false;
+        }
+
+        return MatchesFilter(SourceFilterComboBox, "Todas", inboxEvent.SourceDisplayName)
+               && MatchesFilter(TypeFilterComboBox, "Todos", inboxEvent.EventType)
+               && MatchesFilter(PriorityFilterComboBox, "Todas", inboxEvent.Priority)
+               && MatchesFilter(StatusFilterComboBox, "Todos", inboxEvent.LocalStatus);
+    }
+
+    private void RefreshInboxView()
+    {
+        _inboxView?.Refresh();
+        var visibleCount = _inboxView?.Cast<object>().Count() ?? 0;
+        InboxCountText.Text = $"{visibleCount} de {_events.Count} eventos";
+    }
+
+    private static bool MatchesFilter(ComboBox comboBox, string allValue, string value)
+    {
+        var selected = comboBox.SelectedItem as string;
+        return string.IsNullOrWhiteSpace(selected) || selected == allValue || selected == value;
     }
 
     private void ApplySettingsToUi()
