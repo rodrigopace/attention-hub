@@ -1,0 +1,135 @@
+<Window x:Class="AttentionHub.Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Attention Hub"
+        Height="720"
+        Width="1120"
+        MinHeight="620"
+        MinWidth="960"
+        Background="#F6F8FB">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="232" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="White" BorderBrush="#DCE3EA" BorderThickness="0,0,1,0">
+      <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock Text="Attention Hub" FontSize="22" FontWeight="SemiBold" Foreground="#172033" />
+          <TextBlock Text="Windows Client MVP" Margin="0,4,0,24" Foreground="#667085" />
+
+          <Border Background="#EAF2FF" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+            <TextBlock Text="Agora" FontWeight="SemiBold" Foreground="#0B5CAD" />
+          </Border>
+          <TextBlock Text="Eventos" Padding="12,10" Foreground="#344054" />
+          <TextBlock Text="Agenda" Padding="12,10" Foreground="#344054" />
+          <TextBlock Text="Regras" Padding="12,10" Foreground="#344054" />
+          <TextBlock Text="Status" Padding="12,10" Foreground="#344054" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom">
+          <TextBlock Text="Dispositivo" FontWeight="SemiBold" />
+          <TextBlock x:Name="DeviceText" Text="win-mock-client" Foreground="#667085" Margin="0,4,0,0" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1" Margin="28">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <DockPanel Grid.Row="0" Margin="0,0,0,18">
+        <StackPanel DockPanel.Dock="Left">
+          <TextBlock Text="Agora" FontSize="28" FontWeight="SemiBold" Foreground="#172033" />
+          <TextBlock Text="Eventos mockados enviados via polling para o backend FastAPI" Foreground="#667085" />
+        </StackPanel>
+        <Border DockPanel.Dock="Right" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="6" Padding="12,8">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#98A2B3" Margin="0,0,8,0" />
+            <TextBlock x:Name="SyncStatusText" Text="Aguardando sincronização" Foreground="#344054" />
+          </StackPanel>
+        </Border>
+      </DockPanel>
+
+      <Border Grid.Row="1" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,18">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="120" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="Backend URL" FontWeight="SemiBold" Margin="0,0,0,6" />
+            <TextBox x:Name="BackendUrlTextBox" Text="http://localhost:8000" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Margin="8,0,8,0">
+            <TextBlock Text="Polling (s)" FontWeight="SemiBold" Margin="0,0,0,6" />
+            <TextBox x:Name="PollIntervalTextBox" Text="120" />
+          </StackPanel>
+
+          <Button Grid.Column="2" x:Name="SyncNowButton" Content="Sincronizar" VerticalAlignment="Bottom" Click="SyncNowButton_Click" />
+          <Button Grid.Column="3" x:Name="TogglePollingButton" Content="Iniciar polling" VerticalAlignment="Bottom" Click="TogglePollingButton_Click" />
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,18,0">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Eventos mockados" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <DataGrid x:Name="EventsGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      BorderBrush="#EAECF0"
+                      RowHeaderWidth="0">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Hora" Binding="{Binding DisplayTime}" Width="88" />
+                <DataGridTextColumn Header="Fonte" Binding="{Binding SourceDisplayName}" Width="110" />
+                <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="150" />
+                <DataGridTextColumn Header="Prioridade" Binding="{Binding Priority}" Width="95" />
+                <DataGridTextColumn Header="Resumo" Binding="{Binding Summary}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
+        </Border>
+
+        <Border Grid.Column="1" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Resposta do backend" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <TextBox x:Name="ResponseTextBox"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     IsReadOnly="True"
+                     BorderBrush="#EAECF0" />
+          </DockPanel>
+        </Border>
+      </Grid>
+
+      <TextBlock Grid.Row="3"
+                 x:Name="FooterText"
+                 Text="Sem integrações reais neste MVP: os eventos são gerados localmente para validar o loop client -> backend -> resposta."
+                 Foreground="#667085"
+                 Margin="0,16,0,0" />
+    </Grid>
+  </Grid>
+</Window>
+

@@ -1,16 +1,37 @@
 # Windows Client
 
-Placeholder for the Windows desktop client/agent.
+Minimal WPF/.NET Windows client for the MVP sync loop.
 
-The client should own:
+Implemented in this first version:
 
-- local UI for `Now`, `Events`, `Agenda`, `Rules`, and `Status`;
-- polling outbound to the backend through HTTPS/443;
-- local Windows notifications;
-- collection of local calendar/email/message signals;
-- local masking before data leaves the machine;
-- local audit preview of outbound payloads;
-- Windows proxy and credential-store support.
+- local desktop UI;
+- mocked calendar, email, Teams, and Slack events;
+- manual `POST /sync`;
+- polling timer initiated by the client;
+- backend response preview;
+- no real Outlook, Teams, Slack, WhatsApp, or Google Calendar integrations.
 
-The first implementation should use mocked or manually created local events before any real Outlook, Teams, Slack, WhatsApp, or Google Calendar integration.
+## Run
 
+Start the backend first:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload
+```
+
+Then run the Windows client:
+
+```powershell
+cd windows-client\AttentionHub.Client
+dotnet run
+```
+
+The default backend URL in the UI is:
+
+```text
+http://localhost:8000
+```
+
+Polling is disabled by default. Use `Sincronizar` for a manual sync or `Iniciar polling` to poll automatically.
