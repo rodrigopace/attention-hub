@@ -231,6 +231,7 @@
                 <TextBlock x:Name="CalendarSourceText" Text="Usando eventos mockados como fallback." Foreground="#667085" Margin="0,4,0,0" />
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button x:Name="LoadGoogleCalendarButton" Content="Carregar Google Calendar" Click="LoadGoogleCalendarButton_Click" />
                 <Button x:Name="LoadGraphCalendarButton" Content="Carregar Office 365" Click="LoadGraphCalendarButton_Click" />
                 <Button x:Name="LoadOutlookCalendarButton" Content="Carregar Outlook classico" Click="LoadOutlookCalendarButton_Click" />
               </StackPanel>

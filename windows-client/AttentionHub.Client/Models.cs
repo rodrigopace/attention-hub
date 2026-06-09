@@ -195,6 +195,19 @@ public sealed record SyncStatus(
     string CalendarSync,
     int RecommendedPollIntervalSeconds);
 
+public sealed record CentralCalendarEventsResponse(
+    string Status,
+    IReadOnlyList<CentralCalendarEvent> Events,
+    IReadOnlyList<string> Errors);
+
+public sealed record CentralCalendarEvent(
+    string EventId,
+    string Source,
+    DateTimeOffset StartsAt,
+    DateTimeOffset EndsAt,
+    string Title,
+    string Availability);
+
 public static class SyncRequestFactory
 {
     public static SyncRequest Create(IEnumerable<MockAttentionEvent> mockEvents, ClientSettings settings)

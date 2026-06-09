@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 
 from app.config import Settings
 from app.models import AttentionEvent
+from app.models import CentralCalendarEvent
 
 
 @dataclass(frozen=True)
@@ -21,10 +22,17 @@ class CalendarSyncService(ABC):
     def sync_busy_events(self, events: list[AttentionEvent]) -> CalendarSyncResult:
         """Create or update central calendar busy blocks."""
 
+    @abstractmethod
+    def list_events(self, days_ahead: int = 14) -> tuple[str, list[CentralCalendarEvent], list[str]]:
+        """List central calendar events."""
+
 
 class DisabledCalendarSyncService(CalendarSyncService):
     def sync_busy_events(self, events: list[AttentionEvent]) -> CalendarSyncResult:
         return CalendarSyncResult(status="disabled")
+
+    def list_events(self, days_ahead: int = 14) -> tuple[str, list[CentralCalendarEvent], list[str]]:
+        return "disabled", [], []
 
 
 class GoogleCalendarSyncService(CalendarSyncService):
@@ -62,6 +70,36 @@ class GoogleCalendarSyncService(CalendarSyncService):
             synced_event_ids=synced,
             errors=errors,
         )
+
+    def list_events(self, days_ahead: int = 14) -> tuple[str, list[CentralCalendarEvent], list[str]]:
+        now = datetime.now().astimezone()
+        end = now.replace(microsecond=0) + timedelta(days=days_ahead)
+
+        try:
+            with httpx.Client(timeout=self.timeout_seconds) as client:
+                response = client.get(
+                    self._events_url(),
+                    headers=self._headers(),
+                    params={
+                        "timeMin": now.isoformat(),
+                        "timeMax": end.isoformat(),
+                        "singleEvents": "true",
+                        "orderBy": "startTime",
+                        "maxResults": "250",
+                    },
+                )
+                self._raise_for_google_error(response)
+                items = response.json().get("items", [])
+                mapped = []
+                for item in items:
+                    event = _map_google_event(item)
+                    if event is not None:
+                        mapped.append(event)
+                return "ok", mapped, []
+        except GoogleCalendarAuthError as exc:
+            return "reauth_required", [], [str(exc)]
+        except Exception as exc:
+            return "degraded", [], [str(exc)]
 
     def _upsert_busy_event(self, client: httpx.Client, event: AttentionEvent) -> None:
         existing_event_id = self._find_existing_google_event_id(client, event)
@@ -150,3 +188,29 @@ class GoogleCalendarAuthError(Exception):
 
 def _format_dt(value: datetime) -> str:
     return value.isoformat()
+
+
+def _map_google_event(item: dict) -> CentralCalendarEvent | None:
+    start = item.get("start", {}).get("dateTime") or item.get("start", {}).get("date")
+    end = item.get("end", {}).get("dateTime") or item.get("end", {}).get("date")
+    if not start or not end:
+        return None
+
+    try:
+        starts_at = datetime.fromisoformat(start.replace("Z", "+00:00"))
+        ends_at = datetime.fromisoformat(end.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    private_props = item.get("extendedProperties", {}).get("private", {})
+    source = private_props.get("attentionHubSourceId") or "google-calendar"
+    transparency = item.get("transparency")
+
+    return CentralCalendarEvent(
+        event_id=item.get("id", ""),
+        source=source,
+        starts_at=starts_at,
+        ends_at=ends_at,
+        title=item.get("summary") or "Busy",
+        availability="free" if transparency == "transparent" else "busy",
+    )

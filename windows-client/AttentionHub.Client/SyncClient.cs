@@ -30,9 +30,24 @@ public sealed class SyncClient
                ?? throw new InvalidOperationException("Backend returned an empty or invalid response.");
     }
 
+    public async Task<CentralCalendarEventsResponse> GetCalendarEventsAsync(string backendBaseUrl, int daysAhead = 14)
+    {
+        if (string.IsNullOrWhiteSpace(backendBaseUrl))
+        {
+            throw new ArgumentException("Backend URL is required.", nameof(backendBaseUrl));
+        }
+
+        var endpoint = new Uri(new Uri(EnsureTrailingSlash(backendBaseUrl)), $"calendar/events?days_ahead={daysAhead}");
+        using var response = await _httpClient.GetAsync(endpoint);
+        var responseText = await response.Content.ReadAsStringAsync();
+        response.EnsureSuccessStatusCode();
+
+        return JsonSerializer.Deserialize<CentralCalendarEventsResponse>(responseText, JsonOptions.Wire)
+               ?? throw new InvalidOperationException("Backend returned an empty or invalid calendar response.");
+    }
+
     private static string EnsureTrailingSlash(string value)
     {
         return value.EndsWith("/", StringComparison.Ordinal) ? value : $"{value}/";
     }
 }
-

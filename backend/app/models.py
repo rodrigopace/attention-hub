@@ -151,3 +151,18 @@ class SyncResponse(StrictModel):
 class HealthResponse(StrictModel):
     status: Literal["ok"]
     storage: str
+
+
+class CentralCalendarEvent(StrictModel):
+    event_id: str
+    source: str
+    starts_at: datetime
+    ends_at: datetime
+    title: str
+    availability: Literal["busy", "tentative", "free", "out_of_office"] = "busy"
+
+
+class CentralCalendarEventsResponse(StrictModel):
+    status: Literal["ok", "disabled", "degraded", "reauth_required"]
+    events: list[CentralCalendarEvent] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)

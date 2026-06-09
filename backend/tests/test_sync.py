@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 
 from app.calendar_sync import CalendarSyncResult, CalendarSyncService
 from app.dependencies import get_calendar_sync_service, get_event_store
 from app.main import create_app
+from app.models import CentralCalendarEvent
 from app.sqlite_store import SQLiteEventStore
 
 
@@ -18,6 +21,18 @@ class FakeCalendarSyncService(CalendarSyncService):
             if event.event_type == "calendar.busy" and event.calendar is not None
         ]
         return self.result
+
+    def list_events(self, days_ahead: int = 14):
+        return "ok", [
+            CentralCalendarEvent(
+                event_id="google_evt_001",
+                source="google-calendar",
+                starts_at=datetime.fromisoformat("2026-06-09T09:00:00-03:00"),
+                ends_at=datetime.fromisoformat("2026-06-09T10:00:00-03:00"),
+                title="[Empresa A] Busy",
+                availability="busy",
+            )
+        ], []
 
 
 def build_client(tmp_path, calendar_sync_service: CalendarSyncService | None = None):
@@ -143,3 +158,14 @@ def test_sync_forwards_calendar_busy_events_to_calendar_service(tmp_path):
     assert response.status_code == 200
     assert response.json()["status"]["calendar_sync"] == "ok"
     assert fake_calendar.synced_event_ids == ["evt_cal_001"]
+
+
+def test_calendar_events_lists_central_calendar_items(tmp_path):
+    client = build_client(tmp_path, FakeCalendarSyncService())
+
+    response = client.get("/calendar/events")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["events"][0]["title"] == "[Empresa A] Busy"

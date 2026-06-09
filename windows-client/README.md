@@ -11,7 +11,8 @@ Implemented in this first version:
 - manual `POST /sync`;
 - polling timer initiated by the client;
 - backend response preview;
-- no real Teams, Slack, WhatsApp, or Google Calendar integrations.
+- Google Calendar central agenda loading from backend `/calendar/events`.
+- no real Teams, Slack, or WhatsApp integrations.
 
 ## Run
 
@@ -37,6 +38,8 @@ http://localhost:8000
 ```
 
 Polling is disabled by default. Use `Sincronizar` for a manual sync or `Iniciar polling` to poll automatically.
+
+Use `Agenda -> Carregar Google Calendar` to show events returned by the backend central calendar endpoint.
 
 ## Local Settings
 

@@ -5,7 +5,15 @@ from fastapi import Depends, FastAPI
 
 from app.calendar_sync import CalendarSyncService, CalendarSyncResult
 from app.config import Settings, get_settings
-from app.models import Action, HealthResponse, Rule, SyncRequest, SyncResponse, SyncStatus
+from app.models import (
+    Action,
+    CentralCalendarEventsResponse,
+    HealthResponse,
+    Rule,
+    SyncRequest,
+    SyncResponse,
+    SyncStatus,
+)
 from app.storage import EventStore
 from app.dependencies import get_calendar_sync_service, get_event_store
 
@@ -20,6 +28,14 @@ def create_app() -> FastAPI:
     @app.get("/health", response_model=HealthResponse)
     def health(store: EventStore = Depends(get_event_store)) -> HealthResponse:
         return HealthResponse(status="ok", storage=store.health())
+
+    @app.get("/calendar/events", response_model=CentralCalendarEventsResponse)
+    def calendar_events(
+        days_ahead: int = 14,
+        calendar_sync: CalendarSyncService = Depends(get_calendar_sync_service),
+    ) -> CentralCalendarEventsResponse:
+        status, events, errors = calendar_sync.list_events(days_ahead=days_ahead)
+        return CentralCalendarEventsResponse(status=status, events=events, errors=errors)
 
     @app.post("/sync", response_model=SyncResponse)
     def sync(

@@ -5,6 +5,7 @@ FastAPI MVP backend for Attention Hub.
 Implemented endpoints:
 
 - `GET /health`
+- `GET /calendar/events`
 - `POST /sync`
 
 The backend currently stores device state, sync request audit records, and attention events in SQLite. Storage is isolated behind `EventStore`, so a future PostgreSQL or cloud database implementation can be added without changing route handlers.
@@ -68,5 +69,6 @@ Behavior:
 - event body/location/attendees are not written;
 - upsert is done by `attentionHubDedupeKey` in Google Calendar private extended properties;
 - `calendar_sync` returns `ok`, `degraded`, `disabled`, or `reauth_required`.
+- `GET /calendar/events` lists upcoming events from the configured central Google Calendar for the client Agenda view.
 
 This MVP expects a valid Google OAuth access token. A production version should add a proper OAuth consent/refresh-token flow.

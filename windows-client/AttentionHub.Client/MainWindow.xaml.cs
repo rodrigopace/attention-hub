@@ -64,6 +64,48 @@ public partial class MainWindow
         SaveSettingsFromUi(showConfirmation: true);
     }
 
+    private async void LoadGoogleCalendarButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!SaveSettingsFromUi(showConfirmation: true))
+        {
+            return;
+        }
+
+        LoadGoogleCalendarButton.IsEnabled = false;
+        CalendarSourceText.Text = "Lendo Google Calendar central pelo backend...";
+        SetStatus("Lendo Google Calendar...", "#F79009");
+
+        try
+        {
+            var result = await _syncClient.GetCalendarEventsAsync(_settings.BackendUrl);
+            if (result.Status != "ok")
+            {
+                CalendarSourceText.Text = result.Errors.Count > 0
+                    ? $"Google Calendar indisponivel: {string.Join("; ", result.Errors)}"
+                    : $"Google Calendar status: {result.Status}";
+                SetStatus("Google Calendar indisponivel", "#F79009");
+                return;
+            }
+
+            AgendaGrid.ItemsSource = result.Events
+                .OrderBy(item => item.StartsAt)
+                .Select(item => new AgendaItem(
+                    StartsAt: item.StartsAt,
+                    EndsAt: item.EndsAt,
+                    SourceDisplayName: item.Source,
+                    MaskedTitle: item.Title,
+                    Availability: item.Availability))
+                .ToList();
+
+            CalendarSourceText.Text = $"Google Calendar carregado pelo backend: {result.Events.Count} eventos.";
+            SetStatus("Google Calendar carregado", "#12B76A");
+        }
+        finally
+        {
+            LoadGoogleCalendarButton.IsEnabled = true;
+        }
+    }
+
     private async void LoadGraphCalendarButton_Click(object sender, RoutedEventArgs e)
     {
         if (!SaveSettingsFromUi(showConfirmation: true))
