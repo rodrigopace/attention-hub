@@ -376,18 +376,35 @@ public partial class MainWindow
 
     private void AddNotificationEvents(IReadOnlyList<MockAttentionEvent> notificationEvents)
     {
-        var existingDedupeKeys = _events.Select(item => item.DedupeKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingStatuses = _events
+            .Where(IsWindowsNotificationEvent)
+            .ToDictionary(item => item.DedupeKey, item => item.LocalStatus, StringComparer.OrdinalIgnoreCase);
+        var previousWindowsEvents = _events.Where(IsWindowsNotificationEvent).ToList();
+
+        foreach (var item in previousWindowsEvents)
+        {
+            _events.Remove(item);
+        }
+
         foreach (var item in notificationEvents.OrderByDescending(item => item.OccurredAt))
         {
-            if (existingDedupeKeys.Add(item.DedupeKey))
+            if (existingStatuses.TryGetValue(item.DedupeKey, out var localStatus))
             {
-                _events.Add(item);
+                item.LocalStatus = localStatus;
             }
+
+            _events.Add(item);
         }
 
         ConfigureInboxFilters();
         RefreshDerivedViews();
         RefreshInboxView();
+    }
+
+    private static bool IsWindowsNotificationEvent(MockAttentionEvent item)
+    {
+        return item.DedupeKey.StartsWith("windows:notification:", StringComparison.OrdinalIgnoreCase)
+               || item.DedupeKey.StartsWith("windows:notification-group:", StringComparison.OrdinalIgnoreCase);
     }
 
     private void RefreshDerivedViews()

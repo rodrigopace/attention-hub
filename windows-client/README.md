@@ -68,8 +68,10 @@ The `Eventos` screen has a `Carregar notificacoes Windows` button. It uses the W
 Behavior:
 
 - maps active notifications to local `message.direct` or `message.mention` events;
+- ignores Codex and Attention Hub notifications by default;
+- groups notifications by app and conversation, showing one local inbox row per conversation with a count in the summary;
 - keeps the mock inbox as fallback if access is denied or unavailable;
-- deduplicates notifications locally by generated `dedupe_key`;
+- replaces the previous Windows notification snapshot when notifications are loaded again;
 - does not persist notification content outside the existing local event list unless the user syncs.
 
 Limitations:

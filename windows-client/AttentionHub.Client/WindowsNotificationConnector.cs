@@ -19,6 +19,14 @@ public sealed record NotificationConnectorResult(
 
 public sealed class WindowsNotificationConnector
 {
+    private static readonly string[] IgnoredAppNames =
+    [
+        "codex",
+        "attention hub",
+        "attention-hub",
+        "attentionhub"
+    ];
+
     public async Task<NotificationConnectorResult> ReadCurrentNotificationsAsync()
     {
         try
@@ -36,7 +44,7 @@ public sealed class WindowsNotificationConnector
             }
 
             var notifications = await listener.GetNotificationsAsync(NotificationKinds.Toast);
-            var mappedEvents = new List<MockAttentionEvent>();
+            var mappedNotifications = new List<MappedNotification>();
             var diagnostics = new List<string>
             {
                 $"access_status={accessStatus}",
@@ -49,20 +57,23 @@ public sealed class WindowsNotificationConnector
                 diagnostics.Add(detail);
                 if (mapped is not null)
                 {
-                    mappedEvents.Add(mapped);
+                    mappedNotifications.Add(mapped);
                 }
             }
 
-            var events = mappedEvents
+            var groupedEvents = mappedNotifications
+                .GroupBy(item => item.GroupKey, StringComparer.OrdinalIgnoreCase)
+                .Select(ToGroupedEvent)
                 .OrderByDescending(item => item.OccurredAt)
                 .ToList();
+            diagnostics.Add($"grouped_conversations={groupedEvents.Count}");
 
             return new NotificationConnectorResult(
                 Success: true,
-                Events: events,
-                Message: events.Count == 0
+                Events: groupedEvents,
+                Message: groupedEvents.Count == 0
                     ? "Notificacoes Windows lidas com sucesso, sem notificacoes ativas."
-                    : $"Notificacoes Windows lidas com sucesso: {events.Count} notificacoes ativas.",
+                    : $"Notificacoes Windows lidas com sucesso: {groupedEvents.Count} conversas agrupadas.",
                 Diagnostics: string.Join(Environment.NewLine, diagnostics));
         }
         catch (Exception ex)
@@ -71,7 +82,7 @@ public sealed class WindowsNotificationConnector
         }
     }
 
-    private static MockAttentionEvent? TryMapNotification(UserNotification notification, out string diagnostics)
+    private static MappedNotification? TryMapNotification(UserNotification notification, out string diagnostics)
     {
         try
         {
@@ -81,38 +92,66 @@ public sealed class WindowsNotificationConnector
                 appName = notification.AppInfo.AppUserModelId;
             }
 
+            if (IsIgnoredApp(appName))
+            {
+                diagnostics = $"ignored id={notification.Id}; app={appName}; reason=ignored_app";
+                return null;
+            }
+
             var text = ExtractText(notification.Notification);
             var summary = string.IsNullOrWhiteSpace(text)
                 ? $"Notificacao de {appName}"
                 : text;
-            diagnostics = $"mapped id={notification.Id}; app={appName}; created={notification.CreationTime:o}; text_length={text.Length}";
+            var conversation = ExtractConversation(appName, summary);
+            diagnostics = $"mapped id={notification.Id}; app={appName}; conversation={conversation}; created={notification.CreationTime:o}; text_length={text.Length}";
 
-            var occurredAt = notification.CreationTime;
-            var hash = Hash($"{notification.Id}:{appName}:{occurredAt:o}:{summary}");
-            var normalizedApp = NormalizeAppName(appName);
-            var eventType = GuessEventType(appName, summary);
-            var priority = GuessPriority(summary);
-
-            return new MockAttentionEvent(
-                eventId: $"evt_win_notification_{hash[..16]}",
-                eventType: eventType,
-                sourceId: $"windows-notification-{normalizedApp}",
-                sourceDisplayName: appName,
-                sourceApp: "windows",
-                occurredAt: occurredAt,
-                priority: priority,
-                summary: summary,
-                dedupeKey: $"windows:notification:{hash}",
-                localStatus: "Novo",
-                message: new MessagePayload(
-                    ConversationType: eventType == "message.direct" ? "direct" : "unknown",
-                    SenderHash: $"sha256:{hash[..16]}"));
+            return new MappedNotification(
+                NotificationId: notification.Id,
+                AppName: appName,
+                NormalizedAppName: NormalizeAppName(appName),
+                Conversation: conversation,
+                EventType: GuessEventType(appName, summary),
+                Priority: GuessPriority(summary),
+                Summary: summary,
+                OccurredAt: notification.CreationTime);
         }
         catch (Exception ex)
         {
             diagnostics = $"discarded id={notification.Id}; reason={ex.Message}";
             return null;
         }
+    }
+
+    private static MockAttentionEvent ToGroupedEvent(IGrouping<string, MappedNotification> group)
+    {
+        var ordered = group.OrderByDescending(item => item.OccurredAt).ToList();
+        var latest = ordered[0];
+        var count = ordered.Count;
+        var hash = Hash(group.Key);
+        var eventType = ordered.Any(item => item.EventType == "message.mention")
+            ? "message.mention"
+            : latest.EventType;
+        var priority = ordered.Any(item => item.Priority == "urgent")
+            ? "urgent"
+            : latest.Priority;
+        var summary = count == 1
+            ? latest.Summary
+            : $"{latest.Conversation} | {count} notificacoes agrupadas | ultima: {latest.Summary}";
+
+        return new MockAttentionEvent(
+            eventId: $"evt_win_notification_group_{hash[..16]}",
+            eventType: eventType,
+            sourceId: $"windows-notification-{latest.NormalizedAppName}",
+            sourceDisplayName: latest.AppName,
+            sourceApp: "windows",
+            occurredAt: latest.OccurredAt,
+            priority: priority,
+            summary: summary,
+            dedupeKey: $"windows:notification-group:{hash}",
+            localStatus: "Novo",
+            message: new MessagePayload(
+                ConversationType: eventType == "message.direct" ? "direct" : "unknown",
+                SenderHash: $"sha256:{hash[..16]}"));
     }
 
     private static string ExtractText(Notification notification)
@@ -127,10 +166,16 @@ public sealed class WindowsNotificationConnector
         return string.Join(" | ", textElements.Select(item => item.Text).Where(item => !string.IsNullOrWhiteSpace(item)));
     }
 
+    private static string ExtractConversation(string appName, string summary)
+    {
+        var parts = summary.Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length > 0 ? parts[0] : appName;
+    }
+
     private static string GuessEventType(string appName, string summary)
     {
         var combined = $"{appName} {summary}".ToLowerInvariant();
-        if (combined.Contains("mentioned") || combined.Contains("mencao") || combined.Contains("menção") || combined.Contains("@"))
+        if (combined.Contains("mentioned") || combined.Contains("mencao") || combined.Contains("men\u00e7\u00e3o") || combined.Contains("@"))
         {
             return "message.mention";
         }
@@ -149,6 +194,12 @@ public sealed class WindowsNotificationConnector
         return "normal";
     }
 
+    private static bool IsIgnoredApp(string appName)
+    {
+        var normalized = appName.ToLowerInvariant();
+        return IgnoredAppNames.Any(ignored => normalized.Contains(ignored, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static string NormalizeAppName(string value)
     {
         var chars = value
@@ -162,5 +213,18 @@ public sealed class WindowsNotificationConnector
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    private sealed record MappedNotification(
+        uint NotificationId,
+        string AppName,
+        string NormalizedAppName,
+        string Conversation,
+        string EventType,
+        string Priority,
+        string Summary,
+        DateTimeOffset OccurredAt)
+    {
+        public string GroupKey => $"{NormalizedAppName}:{Conversation}";
     }
 }
