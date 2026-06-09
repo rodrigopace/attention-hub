@@ -7,6 +7,7 @@
   "required": [
     "request_id",
     "accepted_event_ids",
+    "duplicate_event_ids",
     "rejected_events",
     "next_sync_cursor",
     "server_time"
@@ -20,6 +21,13 @@
       "items": {
         "type": "string"
       }
+    },
+    "duplicate_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Event IDs ignored because their dedupe_key was already stored."
     },
     "rejected_events": {
       "type": "array",
@@ -145,4 +153,3 @@
     }
   }
 }
-

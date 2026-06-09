@@ -77,8 +77,8 @@ public partial class MainWindow
             var response = await _syncClient.PostSyncAsync(BackendUrlTextBox.Text.Trim(), request);
 
             ResponseTextBox.Text = JsonSerializer.Serialize(response, JsonOptions.Pretty);
-            SetStatus($"Sync OK: {response.AcceptedEventIds.Count} aceitos", "#12B76A");
-            FooterText.Text = $"Ultima sincronizacao: {DateTimeOffset.Now:HH:mm:ss}. Cursor: {response.NextSyncCursor}";
+            SetStatus($"Sync OK: {response.AcceptedEventIds.Count} aceitos, {response.DuplicateEventIds.Count} duplicados", "#12B76A");
+            FooterText.Text = $"Ultima sincronizacao: {DateTimeOffset.Now:HH:mm:ss}. Aceitos: {response.AcceptedEventIds.Count}. Duplicados: {response.DuplicateEventIds.Count}. Cursor: {response.NextSyncCursor}";
         }
         catch (Exception ex)
         {

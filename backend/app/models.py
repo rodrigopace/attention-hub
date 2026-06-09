@@ -139,11 +139,12 @@ class SyncStatus(StrictModel):
 class SyncResponse(StrictModel):
     request_id: str
     accepted_event_ids: list[str]
+    duplicate_event_ids: list[str] = Field(default_factory=list)
     rejected_events: list[RejectedEvent]
     next_sync_cursor: str
     server_time: datetime
-    effective_rules: list[Rule] = []
-    actions: list[Action] = []
+    effective_rules: list[Rule] = Field(default_factory=list)
+    actions: list[Action] = Field(default_factory=list)
     status: SyncStatus
 
 

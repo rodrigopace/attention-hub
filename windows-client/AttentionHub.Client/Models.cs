@@ -116,6 +116,7 @@ public sealed record MessagePayload(
 public sealed record SyncResponse(
     string RequestId,
     IReadOnlyList<string> AcceptedEventIds,
+    IReadOnlyList<string> DuplicateEventIds,
     IReadOnlyList<RejectedEvent> RejectedEvents,
     string NextSyncCursor,
     DateTimeOffset ServerTime,

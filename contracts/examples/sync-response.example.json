@@ -5,6 +5,7 @@
     "evt_email_001",
     "evt_msg_001"
   ],
+  "duplicate_event_ids": [],
   "rejected_events": [],
   "next_sync_cursor": "cursor_20260609_001",
   "server_time": "2026-06-09T09:00:01-03:00",
@@ -44,4 +45,3 @@
     "recommended_poll_interval_seconds": 120
   }
 }
-

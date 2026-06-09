@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
         return SyncResponse(
             request_id=payload.request_id,
             accepted_event_ids=result.accepted_event_ids,
+            duplicate_event_ids=result.duplicate_event_ids,
             rejected_events=[],
             next_sync_cursor=result.next_sync_cursor,
             server_time=now,
@@ -93,4 +94,3 @@ def _actions_for(payload: SyncRequest) -> list[Action]:
 
 
 app = create_app()
-

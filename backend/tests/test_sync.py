@@ -67,8 +67,10 @@ def test_sync_accepts_events_and_deduplicates(tmp_path):
 
     assert first.status_code == 200
     assert first.json()["accepted_event_ids"] == ["evt_email_001"]
+    assert first.json()["duplicate_event_ids"] == []
     assert first.json()["actions"][0]["action_type"] == "show_local_notification"
 
     assert second.status_code == 200
     assert second.json()["accepted_event_ids"] == []
+    assert second.json()["duplicate_event_ids"] == ["evt_email_001"]
     assert second.json()["rejected_events"] == []
