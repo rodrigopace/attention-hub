@@ -6,6 +6,7 @@ Implemented in this first version:
 
 - local desktop UI;
 - mocked calendar, email, Teams, and Slack events;
+- read-only Office 365 calendar loading through Microsoft Graph device code OAuth;
 - read-only Outlook Calendar loading via local Windows COM;
 - manual `POST /sync`;
 - polling timer initiated by the client;
@@ -53,6 +54,30 @@ Persisted fields:
 - device display name.
 
 Use the `Status` screen to edit and save device settings. Backend URL and polling interval are also saved when syncing or starting polling.
+
+## Outlook Calendar Read-Only Connector
+
+## Microsoft Graph Calendar Read-Only Connector
+
+The `Agenda` screen has a `Carregar Office 365` button. It uses Microsoft Graph device code OAuth and reads `/me/calendarView` with `Calendars.ReadBasic`.
+
+Setup:
+
+1. Register a public client app in Microsoft Entra ID.
+2. Enable public client/device code flow for the app.
+3. Add delegated Microsoft Graph permissions:
+   - `Calendars.ReadBasic`
+   - `User.Read`
+4. Copy the app/client id into the `Status` screen as `Microsoft Client ID`.
+5. Use `common`, `organizations`, or your tenant id in `Tenant`.
+
+The connector keeps the access token in memory only. It does not persist Microsoft tokens to disk in this MVP.
+
+Privacy behavior:
+
+- subject/body/location/attendees are not requested from Graph;
+- requested fields are limited to id, start, end, showAs, cancellation state, organizer flag, and type;
+- generated local event titles are masked as `[Office 365] Busy`.
 
 ## Outlook Calendar Read-Only Connector
 

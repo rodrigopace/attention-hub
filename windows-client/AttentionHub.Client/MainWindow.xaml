@@ -230,7 +230,10 @@
                 <TextBlock Text="Agenda consolidada" FontSize="18" FontWeight="SemiBold" />
                 <TextBlock x:Name="CalendarSourceText" Text="Usando eventos mockados como fallback." Foreground="#667085" Margin="0,4,0,0" />
               </StackPanel>
-              <Button Grid.Column="1" x:Name="LoadOutlookCalendarButton" Content="Carregar Outlook" VerticalAlignment="Bottom" Click="LoadOutlookCalendarButton_Click" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button x:Name="LoadGraphCalendarButton" Content="Carregar Office 365" Click="LoadGraphCalendarButton_Click" />
+                <Button x:Name="LoadOutlookCalendarButton" Content="Carregar Outlook classico" Click="LoadOutlookCalendarButton_Click" />
+              </StackPanel>
             </Grid>
             <DataGrid x:Name="AgendaGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
               <DataGrid.Columns>
@@ -269,6 +272,8 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="220" />
                   <ColumnDefinition Width="260" />
+                  <ColumnDefinition Width="160" />
+                  <ColumnDefinition Width="260" />
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
@@ -280,8 +285,16 @@
                   <TextBlock Text="Nome do dispositivo" FontWeight="SemiBold" Margin="0,0,0,6" />
                   <TextBox x:Name="DeviceDisplayNameTextBox" />
                 </StackPanel>
-                <Button Grid.Column="2" x:Name="SaveSettingsButton" Content="Salvar configuracoes" VerticalAlignment="Bottom" Click="SaveSettingsButton_Click" />
-                <TextBlock Grid.Column="3" x:Name="SettingsStatusText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextWrapping="Wrap" />
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                  <TextBlock Text="Tenant" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <TextBox x:Name="MicrosoftTenantIdTextBox" />
+                </StackPanel>
+                <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                  <TextBlock Text="Microsoft Client ID" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <TextBox x:Name="MicrosoftClientIdTextBox" />
+                </StackPanel>
+                <Button Grid.Column="4" x:Name="SaveSettingsButton" Content="Salvar configuracoes" VerticalAlignment="Bottom" Click="SaveSettingsButton_Click" />
+                <TextBlock Grid.Column="5" x:Name="SettingsStatusText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextWrapping="Wrap" />
               </Grid>
             </Border>
 

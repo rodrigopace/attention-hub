@@ -107,6 +107,7 @@
           "type": "string",
           "enum": [
             "outlook",
+            "microsoft_graph",
             "teams",
             "slack",
             "whatsapp",
@@ -233,4 +234,3 @@
     }
   }
 }
-

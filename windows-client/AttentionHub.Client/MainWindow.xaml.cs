@@ -15,6 +15,7 @@ public partial class MainWindow
     private readonly DispatcherTimer _pollTimer;
     private readonly SyncClient _syncClient = new();
     private readonly OutlookCalendarConnector _outlookCalendarConnector = new();
+    private readonly MicrosoftGraphCalendarConnector _microsoftGraphCalendarConnector = new();
     private ICollectionView _inboxView = null!;
     private ClientSettings _settings;
 
@@ -61,6 +62,48 @@ public partial class MainWindow
     private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
     {
         SaveSettingsFromUi(showConfirmation: true);
+    }
+
+    private async void LoadGraphCalendarButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!SaveSettingsFromUi(showConfirmation: true))
+        {
+            return;
+        }
+
+        LoadGraphCalendarButton.IsEnabled = false;
+        CalendarSourceText.Text = "Iniciando autenticacao Microsoft Graph...";
+        SetStatus("Lendo Office 365 Calendar...", "#F79009");
+
+        try
+        {
+            var result = await _microsoftGraphCalendarConnector.ReadUpcomingBusyEventsAsync(
+                _settings,
+                message =>
+                {
+                    MessageBox.Show(
+                        message,
+                        "Microsoft Graph Device Code",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return Task.CompletedTask;
+                });
+
+            if (!result.Success || result.Events.Count == 0)
+            {
+                CalendarSourceText.Text = $"{result.Message} Mantendo fallback atual.";
+                SetStatus("Office 365 indisponivel; fallback mantido", "#F79009");
+                return;
+            }
+
+            ReplaceCalendarEvents(result.Events);
+            CalendarSourceText.Text = result.Message;
+            SetStatus("Office 365 Calendar carregado", "#12B76A");
+        }
+        finally
+        {
+            LoadGraphCalendarButton.IsEnabled = true;
+        }
     }
 
     private async void LoadOutlookCalendarButton_Click(object sender, RoutedEventArgs e)
@@ -317,6 +360,8 @@ public partial class MainWindow
         PollIntervalTextBox.Text = _settings.PollIntervalSeconds.ToString();
         DeviceIdTextBox.Text = _settings.DeviceId;
         DeviceDisplayNameTextBox.Text = _settings.DeviceDisplayName;
+        MicrosoftTenantIdTextBox.Text = _settings.MicrosoftTenantId;
+        MicrosoftClientIdTextBox.Text = _settings.MicrosoftClientId;
         DeviceText.Text = _settings.DeviceId;
         SettingsPathText.Text = ClientSettingsStore.SettingsPath;
         SettingsStatusText.Text = "Configuracoes carregadas.";
@@ -337,6 +382,8 @@ public partial class MainWindow
         var backendUrl = BackendUrlTextBox.Text.Trim();
         var deviceId = DeviceIdTextBox.Text.Trim();
         var deviceName = DeviceDisplayNameTextBox.Text.Trim();
+        var microsoftTenantId = MicrosoftTenantIdTextBox.Text.Trim();
+        var microsoftClientId = MicrosoftClientIdTextBox.Text.Trim();
 
         if (string.IsNullOrWhiteSpace(backendUrl) || string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(deviceName))
         {
@@ -352,7 +399,9 @@ public partial class MainWindow
             BackendUrl: backendUrl,
             PollIntervalSeconds: pollSeconds,
             DeviceId: deviceId,
-            DeviceDisplayName: deviceName);
+            DeviceDisplayName: deviceName,
+            MicrosoftTenantId: string.IsNullOrWhiteSpace(microsoftTenantId) ? "common" : microsoftTenantId,
+            MicrosoftClientId: microsoftClientId);
 
         ClientSettingsStore.Save(_settings);
         DeviceText.Text = _settings.DeviceId;

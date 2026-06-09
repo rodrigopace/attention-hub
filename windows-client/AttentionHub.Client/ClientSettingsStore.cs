@@ -7,13 +7,17 @@ public sealed record ClientSettings(
     string BackendUrl,
     int PollIntervalSeconds,
     string DeviceId,
-    string DeviceDisplayName)
+    string DeviceDisplayName,
+    string MicrosoftTenantId,
+    string MicrosoftClientId)
 {
     public static ClientSettings Default => new(
         BackendUrl: "http://localhost:8000",
         PollIntervalSeconds: 120,
         DeviceId: "win-mock-client",
-        DeviceDisplayName: Environment.MachineName);
+        DeviceDisplayName: Environment.MachineName,
+        MicrosoftTenantId: "common",
+        MicrosoftClientId: "");
 }
 
 public static class ClientSettingsStore

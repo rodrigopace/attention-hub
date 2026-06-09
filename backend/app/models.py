@@ -36,7 +36,7 @@ class Source(StrictModel):
     source_id: str
     display_name: str
     environment_type: Literal["corporate", "personal", "unknown"]
-    app: Literal["outlook", "teams", "slack", "whatsapp", "google_calendar", "windows", "other"] | None = None
+    app: Literal["outlook", "microsoft_graph", "teams", "slack", "whatsapp", "google_calendar", "windows", "other"] | None = None
 
 
 class CalendarPayload(StrictModel):
