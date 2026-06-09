@@ -6,6 +6,7 @@ Implemented in this first version:
 
 - local desktop UI;
 - mocked calendar, email, Teams, and Slack events;
+- mock/real Windows notification loading with fallback;
 - read-only Office 365 calendar loading through Microsoft Graph device code OAuth;
 - read-only Outlook Calendar loading via local Windows COM;
 - manual `POST /sync`;
@@ -41,6 +42,8 @@ Polling is disabled by default. Use `Sincronizar` for a manual sync or `Iniciar 
 
 Use `Agenda -> Carregar Google Calendar` to show events returned by the backend central calendar endpoint.
 
+Use `Eventos -> Carregar notificacoes Windows` to request access to active Windows toast notifications and add them to the local inbox.
+
 ## Local Settings
 
 The client persists basic settings as JSON in:
@@ -57,6 +60,23 @@ Persisted fields:
 - device display name.
 
 Use the `Status` screen to edit and save device settings. Backend URL and polling interval are also saved when syncing or starting polling.
+
+## Windows Notification Connector
+
+The `Eventos` screen has a `Carregar notificacoes Windows` button. It uses the Windows `UserNotificationListener` API to read active toast notifications when the OS grants access.
+
+Behavior:
+
+- maps active notifications to local `message.direct` or `message.mention` events;
+- keeps the mock inbox as fallback if access is denied or unavailable;
+- deduplicates notifications locally by generated `dedupe_key`;
+- does not persist notification content outside the existing local event list unless the user syncs.
+
+Limitations:
+
+- Windows may require explicit notification listener permission;
+- some desktop/unpackaged app contexts can be denied by the OS;
+- notification text is best-effort because each app structures toast content differently.
 
 ## Outlook Calendar Read-Only Connector
 

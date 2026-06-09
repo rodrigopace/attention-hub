@@ -16,6 +16,7 @@ public partial class MainWindow
     private readonly SyncClient _syncClient = new();
     private readonly OutlookCalendarConnector _outlookCalendarConnector = new();
     private readonly MicrosoftGraphCalendarConnector _microsoftGraphCalendarConnector = new();
+    private readonly WindowsNotificationConnector _windowsNotificationConnector = new();
     private ICollectionView _inboxView = null!;
     private ClientSettings _settings;
 
@@ -188,6 +189,31 @@ public partial class MainWindow
         RefreshInboxView();
     }
 
+    private async void LoadWindowsNotificationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        LoadWindowsNotificationsButton.IsEnabled = false;
+        SetStatus("Lendo notificacoes Windows...", "#F79009");
+
+        try
+        {
+            var result = await _windowsNotificationConnector.ReadCurrentNotificationsAsync();
+            if (!result.Success || result.Events.Count == 0)
+            {
+                SetStatus("Notificacoes Windows indisponiveis; fallback mantido", "#F79009");
+                FooterText.Text = result.Message;
+                return;
+            }
+
+            AddNotificationEvents(result.Events);
+            SetStatus("Notificacoes Windows carregadas", "#12B76A");
+            FooterText.Text = result.Message;
+        }
+        finally
+        {
+            LoadWindowsNotificationsButton.IsEnabled = true;
+        }
+    }
+
     private void MarkSeenButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: MockAttentionEvent item })
@@ -339,6 +365,22 @@ public partial class MainWindow
         foreach (var item in calendarEvents.OrderBy(item => item.OccurredAt))
         {
             _events.Add(item);
+        }
+
+        ConfigureInboxFilters();
+        RefreshDerivedViews();
+        RefreshInboxView();
+    }
+
+    private void AddNotificationEvents(IReadOnlyList<MockAttentionEvent> notificationEvents)
+    {
+        var existingDedupeKeys = _events.Select(item => item.DedupeKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in notificationEvents.OrderByDescending(item => item.OccurredAt))
+        {
+            if (existingDedupeKeys.Add(item.DedupeKey))
+            {
+                _events.Add(item);
+            }
         }
 
         ConfigureInboxFilters();

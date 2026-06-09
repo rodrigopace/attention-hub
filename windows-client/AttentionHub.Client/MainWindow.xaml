@@ -168,6 +168,7 @@
                   <ColumnDefinition Width="150" />
                   <ColumnDefinition Width="150" />
                   <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
@@ -192,7 +193,8 @@
                 </StackPanel>
 
                 <Button Grid.Column="4" Content="Limpar filtros" VerticalAlignment="Bottom" Click="ClearInboxFiltersButton_Click" />
-                <TextBlock Grid.Column="5" x:Name="InboxCountText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextAlignment="Right" />
+                <Button Grid.Column="5" x:Name="LoadWindowsNotificationsButton" Content="Carregar notificacoes Windows" VerticalAlignment="Bottom" Click="LoadWindowsNotificationsButton_Click" />
+                <TextBlock Grid.Column="6" x:Name="InboxCountText" Text="" Foreground="#667085" VerticalAlignment="Bottom" TextAlignment="Right" />
               </Grid>
             </Border>
             <DataGrid x:Name="EventsInboxGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
