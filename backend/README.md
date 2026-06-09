@@ -1,21 +1,43 @@
 # Backend
 
-Placeholder for the MVP backend.
+FastAPI MVP backend for Attention Hub.
 
-The first backend implementation should expose:
+Implemented endpoints:
 
 - `GET /health`
 - `POST /sync`
 
-The backend should own:
+The backend currently stores device state, sync request audit records, and attention events in SQLite. Storage is isolated behind `EventStore`, so a future PostgreSQL or cloud database implementation can be added without changing route handlers.
 
-- device registration state;
-- event ingestion;
-- deduplication;
-- rule evaluation;
-- consolidated event state;
-- Google Calendar write integration after the mock sync loop is proven;
-- audit records showing exactly what the client sent.
+## Run Locally
 
-No real external integrations are implemented in this initial repository shape.
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .[test]
+uvicorn app.main:app --reload
+```
 
+The default database is:
+
+```text
+backend/data/attention-hub.sqlite3
+```
+
+Override it with:
+
+```powershell
+$env:ATTENTION_HUB_DATABASE_URL = "sqlite:///./data/dev.sqlite3"
+```
+
+## Test
+
+```powershell
+cd backend
+pytest
+```
+
+## P0 Boundaries
+
+No real Outlook, Teams, Slack, WhatsApp, or Google Calendar integrations are implemented yet. `/sync` accepts the contracts and persists metadata-first events for the Windows client loop.
