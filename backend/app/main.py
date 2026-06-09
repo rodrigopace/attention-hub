@@ -3,10 +3,11 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI
 
+from app.calendar_sync import CalendarSyncService, CalendarSyncResult
 from app.config import Settings, get_settings
 from app.models import Action, HealthResponse, Rule, SyncRequest, SyncResponse, SyncStatus
 from app.storage import EventStore
-from app.dependencies import get_event_store
+from app.dependencies import get_calendar_sync_service, get_event_store
 
 
 def create_app() -> FastAPI:
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
     def sync(
         payload: SyncRequest,
         store: EventStore = Depends(get_event_store),
+        calendar_sync: CalendarSyncService = Depends(get_calendar_sync_service),
         settings: Settings = Depends(get_settings),
     ) -> SyncResponse:
         now = datetime.now(timezone.utc)
@@ -34,6 +36,7 @@ def create_app() -> FastAPI:
             received_at=now,
             events=payload.events,
         )
+        calendar_result = calendar_sync.sync_busy_events(payload.events)
 
         return SyncResponse(
             request_id=payload.request_id,
@@ -43,9 +46,9 @@ def create_app() -> FastAPI:
             next_sync_cursor=result.next_sync_cursor,
             server_time=now,
             effective_rules=_default_rules(),
-            actions=_actions_for(payload),
+            actions=_actions_for(payload, calendar_result),
             status=SyncStatus(
-                calendar_sync="disabled",
+                calendar_sync=calendar_result.status,
                 recommended_poll_interval_seconds=settings.default_poll_interval_seconds,
             ),
         )
@@ -71,7 +74,7 @@ def _default_rules() -> list[Rule]:
     ]
 
 
-def _actions_for(payload: SyncRequest) -> list[Action]:
+def _actions_for(payload: SyncRequest, calendar_result: CalendarSyncResult) -> list[Action]:
     actions: list[Action] = []
     for event in payload.events:
         if event.event_type == "email.direct" and event.priority in {"high", "urgent"}:
@@ -90,6 +93,14 @@ def _actions_for(payload: SyncRequest) -> list[Action]:
                     message=f"Mensagem urgente em {event.source.display_name}",
                 )
             )
+    if calendar_result.auth_required:
+        actions.append(
+            Action(
+                action_id=f"action_{uuid4().hex}",
+                action_type="reauthenticate_calendar",
+                message="Google Calendar precisa de reautenticacao ou novo access token.",
+            )
+        )
     return actions
 
 

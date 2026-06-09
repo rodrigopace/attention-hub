@@ -12,6 +12,14 @@ class Settings(BaseSettings):
         description="Storage URL. Only sqlite:// is implemented in the MVP.",
     )
     default_poll_interval_seconds: int = 120
+    google_calendar_id: str | None = None
+    google_calendar_access_token: str | None = None
+    google_calendar_timeout_seconds: float = 10.0
+    google_calendar_busy_title_template: str = "[{source_display_name}] Busy"
+
+    @property
+    def google_calendar_enabled(self) -> bool:
+        return bool(self.google_calendar_id and self.google_calendar_access_token)
 
     @property
     def sqlite_path(self) -> Path:
@@ -23,4 +31,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

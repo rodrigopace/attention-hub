@@ -1,17 +1,51 @@
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_event_store
+from app.calendar_sync import CalendarSyncResult, CalendarSyncService
+from app.dependencies import get_calendar_sync_service, get_event_store
 from app.main import create_app
 from app.sqlite_store import SQLiteEventStore
 
 
-def build_client(tmp_path):
+class FakeCalendarSyncService(CalendarSyncService):
+    def __init__(self, result: CalendarSyncResult | None = None):
+        self.result = result or CalendarSyncResult(status="ok")
+        self.synced_event_ids: list[str] = []
+
+    def sync_busy_events(self, events):
+        self.synced_event_ids = [
+            event.event_id
+            for event in events
+            if event.event_type == "calendar.busy" and event.calendar is not None
+        ]
+        return self.result
+
+
+def build_client(tmp_path, calendar_sync_service: CalendarSyncService | None = None):
     app = create_app()
     store = SQLiteEventStore(tmp_path / "test.sqlite3")
     store.initialize()
 
     app.dependency_overrides[get_event_store] = lambda: store
+    if calendar_sync_service is not None:
+        app.dependency_overrides[get_calendar_sync_service] = lambda: calendar_sync_service
     return TestClient(app)
+
+
+def build_payload(events):
+    return {
+        "request_id": "req_test_001",
+        "device": {
+            "device_id": "win-notebook-empresa-a",
+            "display_name": "Notebook Empresa A",
+            "platform": "windows",
+            "agent_version": "0.1.0",
+            "timezone": "America/Sao_Paulo",
+        },
+        "sync_cursor": None,
+        "sent_at": "2026-06-09T09:00:00-03:00",
+        "events": events,
+        "client_capabilities": ["outlook_email_metadata"],
+    }
 
 
 def test_health_returns_sqlite(tmp_path):
@@ -25,18 +59,8 @@ def test_health_returns_sqlite(tmp_path):
 
 def test_sync_accepts_events_and_deduplicates(tmp_path):
     client = build_client(tmp_path)
-    payload = {
-        "request_id": "req_test_001",
-        "device": {
-            "device_id": "win-notebook-empresa-a",
-            "display_name": "Notebook Empresa A",
-            "platform": "windows",
-            "agent_version": "0.1.0",
-            "timezone": "America/Sao_Paulo",
-        },
-        "sync_cursor": None,
-        "sent_at": "2026-06-09T09:00:00-03:00",
-        "events": [
+    payload = build_payload(
+        [
             {
                 "event_id": "evt_email_001",
                 "event_type": "email.direct",
@@ -58,9 +82,8 @@ def test_sync_accepts_events_and_deduplicates(tmp_path):
                     "has_attachments": False,
                 },
             }
-        ],
-        "client_capabilities": ["outlook_email_metadata"],
-    }
+        ]
+    )
 
     first = client.post("/sync", json=payload)
     second = client.post("/sync", json={**payload, "request_id": "req_test_002"})
@@ -74,3 +97,49 @@ def test_sync_accepts_events_and_deduplicates(tmp_path):
     assert second.json()["accepted_event_ids"] == []
     assert second.json()["duplicate_event_ids"] == ["evt_email_001"]
     assert second.json()["rejected_events"] == []
+
+
+def test_sync_defaults_calendar_sync_to_disabled(tmp_path):
+    client = build_client(tmp_path)
+    payload = build_payload([])
+
+    response = client.post("/sync", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"]["calendar_sync"] == "disabled"
+
+
+def test_sync_forwards_calendar_busy_events_to_calendar_service(tmp_path):
+    fake_calendar = FakeCalendarSyncService()
+    client = build_client(tmp_path, fake_calendar)
+    payload = build_payload(
+        [
+            {
+                "event_id": "evt_cal_001",
+                "event_type": "calendar.busy",
+                "source": {
+                    "source_id": "empresa-a",
+                    "display_name": "Empresa A",
+                    "environment_type": "corporate",
+                    "app": "outlook",
+                },
+                "occurred_at": "2026-06-09T09:00:00-03:00",
+                "privacy_level": "metadata_only",
+                "priority": "normal",
+                "dedupe_key": "empresa-a:calendar:busy:001",
+                "calendar": {
+                    "starts_at": "2026-06-09T09:30:00-03:00",
+                    "ends_at": "2026-06-09T10:00:00-03:00",
+                    "availability": "busy",
+                    "masked_title": "[Empresa A] Busy",
+                    "is_recurring": False,
+                },
+            }
+        ]
+    )
+
+    response = client.post("/sync", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"]["calendar_sync"] == "ok"
+    assert fake_calendar.synced_event_ids == ["evt_cal_001"]
