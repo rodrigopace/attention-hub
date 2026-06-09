@@ -221,7 +221,17 @@
 
         <Border x:Name="AgendaView" Visibility="Collapsed" Background="White" BorderBrush="#DCE3EA" BorderThickness="1" CornerRadius="8" Padding="16">
           <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="Agenda consolidada mockada" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Agenda consolidada" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock x:Name="CalendarSourceText" Text="Usando eventos mockados como fallback." Foreground="#667085" Margin="0,4,0,0" />
+              </StackPanel>
+              <Button Grid.Column="1" x:Name="LoadOutlookCalendarButton" Content="Carregar Outlook" VerticalAlignment="Bottom" Click="LoadOutlookCalendarButton_Click" />
+            </Grid>
             <DataGrid x:Name="AgendaGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Inicio" Binding="{Binding StartsAtDisplay}" Width="130" />

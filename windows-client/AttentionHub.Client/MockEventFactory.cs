@@ -104,9 +104,11 @@ public static class MockEventFactory
             .Select(group => new SourceStatus(
                 SourceDisplayName: group.Key.SourceDisplayName,
                 App: group.Key.SourceApp,
-                Status: "Mock OK",
+                Status: group.Any(item => item.SourceId == "outlook-calendar") ? "Read-only OK" : "Mock OK",
                 LastEventAt: group.Max(item => item.OccurredAt),
-                Notes: "Fonte mockada; nenhuma integracao real habilitada."))
+                Notes: group.Any(item => item.SourceId == "outlook-calendar")
+                    ? "Eventos lidos localmente do Outlook Calendar via COM; conteudo mascarado."
+                    : "Fonte mockada; nenhuma integracao real habilitada."))
             .OrderBy(item => item.SourceDisplayName)
             .ToList();
     }

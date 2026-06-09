@@ -14,6 +14,7 @@ public partial class MainWindow
     private readonly ObservableCollection<MockAttentionEvent> _events;
     private readonly DispatcherTimer _pollTimer;
     private readonly SyncClient _syncClient = new();
+    private readonly OutlookCalendarConnector _outlookCalendarConnector = new();
     private ICollectionView _inboxView = null!;
     private ClientSettings _settings;
 
@@ -28,12 +29,10 @@ public partial class MainWindow
         _inboxView = CollectionViewSource.GetDefaultView(_events);
         _inboxView.Filter = FilterInboxEvent;
         EventsInboxGrid.ItemsSource = _inboxView;
-        AgendaGrid.ItemsSource = MockEventFactory.CreateAgendaItems(_events);
         RulesGrid.ItemsSource = MockEventFactory.CreateRules();
-        StatusGrid.ItemsSource = MockEventFactory.CreateSourceStatuses(_events);
+        RefreshDerivedViews();
         ConfigureInboxFilters();
         RefreshInboxView();
-        RefreshSummary();
 
         _pollTimer = new DispatcherTimer();
         _pollTimer.Tick += async (_, _) => await SyncAsync();
@@ -62,6 +61,32 @@ public partial class MainWindow
     private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
     {
         SaveSettingsFromUi(showConfirmation: true);
+    }
+
+    private async void LoadOutlookCalendarButton_Click(object sender, RoutedEventArgs e)
+    {
+        LoadOutlookCalendarButton.IsEnabled = false;
+        CalendarSourceText.Text = "Lendo Outlook Calendar local...";
+        SetStatus("Lendo Outlook Calendar...", "#F79009");
+
+        try
+        {
+            var result = await _outlookCalendarConnector.ReadUpcomingBusyEventsAsync();
+            if (!result.Success || result.Events.Count == 0)
+            {
+                CalendarSourceText.Text = $"{result.Message} Mantendo fallback mockado.";
+                SetStatus("Outlook indisponivel; fallback mockado", "#F79009");
+                return;
+            }
+
+            ReplaceCalendarEvents(result.Events);
+            CalendarSourceText.Text = result.Message;
+            SetStatus("Outlook Calendar carregado", "#12B76A");
+        }
+        finally
+        {
+            LoadOutlookCalendarButton.IsEnabled = true;
+        }
     }
 
     private void InboxFilter_Changed(object sender, SelectionChangedEventArgs e)
@@ -213,6 +238,34 @@ public partial class MainWindow
     private static SolidColorBrush SolidBrush(string color)
     {
         return (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
+    }
+
+    private void ReplaceCalendarEvents(IReadOnlyList<MockAttentionEvent> calendarEvents)
+    {
+        var existingCalendarEvents = _events
+            .Where(item => item.EventType.StartsWith("calendar.", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var item in existingCalendarEvents)
+        {
+            _events.Remove(item);
+        }
+
+        foreach (var item in calendarEvents.OrderBy(item => item.OccurredAt))
+        {
+            _events.Add(item);
+        }
+
+        ConfigureInboxFilters();
+        RefreshDerivedViews();
+        RefreshInboxView();
+    }
+
+    private void RefreshDerivedViews()
+    {
+        AgendaGrid.ItemsSource = MockEventFactory.CreateAgendaItems(_events);
+        StatusGrid.ItemsSource = MockEventFactory.CreateSourceStatuses(_events);
+        RefreshSummary();
     }
 
     private void ConfigureInboxFilters()

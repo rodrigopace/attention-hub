@@ -6,10 +6,11 @@ Implemented in this first version:
 
 - local desktop UI;
 - mocked calendar, email, Teams, and Slack events;
+- read-only Outlook Calendar loading via local Windows COM;
 - manual `POST /sync`;
 - polling timer initiated by the client;
 - backend response preview;
-- no real Outlook, Teams, Slack, WhatsApp, or Google Calendar integrations.
+- no real Teams, Slack, WhatsApp, or Google Calendar integrations.
 
 ## Run
 
@@ -52,3 +53,14 @@ Persisted fields:
 - device display name.
 
 Use the `Status` screen to edit and save device settings. Backend URL and polling interval are also saved when syncing or starting polling.
+
+## Outlook Calendar Read-Only Connector
+
+The `Agenda` screen has a `Carregar Outlook` button. It attempts to read upcoming local Outlook Desktop calendar items through COM and maps them to `calendar.busy` events with masked titles.
+
+Privacy behavior:
+
+- meeting subject is not sent;
+- attendee/body/location are not read into the payload;
+- the generated title is `[Outlook] Busy`;
+- if Outlook is unavailable or returns no events, the client keeps the mocked fallback events.
